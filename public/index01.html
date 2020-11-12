@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Titulo</title>
+    <link rel="stylesheet" href="main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="container" id="Redefinir_senha" style="display: block;">
+        <form action="/action_page.php">
+            <div class="row" id="main">
+                <h2 style="text-align:center">Redefinir senha</h2>
+        
+                <div class="col">
+                    <div class="hide-md-lg">
+                        <p></p>
+                    </div>
+                    <input type="email" name="rs_email" id="rs_email" placeholder="E-mail USP" required>
+                    <input type="text" name="rs_cod" id="rs_cod" placeholder="Código de confirmação" required>
+                    <input type="password" name="rs_pwd1" id="rs_pwd1" placeholder="Nova senha" required>
+                    <input type="password" name="rs_pwd2" id="rs_pwd2" placeholder="Repetir nova senha" required>
+                    <input type="submit" id="enviarSenha" value="Enviar nova senha">
+                </div>
+        
+            </div>      
+        </form>
+    </div>
+
+    <script src="app.js"></script>
+    <noscript>no script, yet</noscript>
+</body>
+</html>
