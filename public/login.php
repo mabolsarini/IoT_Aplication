@@ -1,7 +1,7 @@
 <?php
-$login = $_POST['login'];
-$entrar = $_POST['entrar'];
-$senha = md5($_POST['senha']);
+$login = $_POST['si_email'];
+$entrar = $_POST['si_submit'];
+$senha = md5($_POST['si_pwd']);
 $connect = mysql_connect('nome_do_servidor','nome_de_usuario','senha');
 $db = mysql_select_db('nome_do_banco_de_dados');
   if (isset($entrar)) {
