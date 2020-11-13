@@ -50,7 +50,11 @@
                     </div>
                     <input type="email" name="su_email" id="su_email" placeholder="E-mail USP" required>
                     <input type="password" name="su_pwd1" id="su_pwd1" placeholder="Senha" required>
-                    <input type="password" name="su_pwd2" id="su_pwd2" placeholder="Repetir senha" required>
+                    <input type="password" name="su_pwd2" id="su_pwd2" placeholder="Repetir senha" onkeypress="myFunction()" required>
+                    <div id="pwd-error-msg-holder" style="display: none;">
+                        <p id="pwd-error-msg">As senhas não coincidem</p>
+                    </div>
+                                
                     <input type="submit" id="su_submit" value="Cadastrar">
                 </div>
         
@@ -77,6 +81,16 @@
 
     <script src="app.js"></script>
     <script src="login.js"></script>
+    <script>
+        function myFunction() {
+            const signUpForm = document.getElementById("sign_up_form");
+            const password1 = signUpForm.su_pwd1.value;
+            const password2 = signUpForm.su_pwd2.value;
+            if(password1 === password2) passwordError.style.display = "none";
+            else passwordError.style.display = "block" 
+        }
+    </script>
+    <script src="cadastro.js"></script>
     <noscript>no script, yet</noscript>
 </body>
 </html>
