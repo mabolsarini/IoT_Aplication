@@ -1,0 +1,24 @@
+{
+  "name": "iot_aplication",
+  "version": "1.0.0",
+  "description": "Ar condicionado IoT",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AraujoVE/IoT_Aplication.git"
+  },
+  "author": "time1",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AraujoVE/IoT_Aplication/issues"
+  },
+  "homepage": "https://github.com/AraujoVE/IoT_Aplication#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mqtt": "^4.2.5",
+    "socket.io": "^3.0.1"
+  }
+}

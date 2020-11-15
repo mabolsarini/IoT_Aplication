@@ -2,86 +2,64 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <title>Titulo</title>
-    <link rel="stylesheet" href="main.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ar-Condicionado IoT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+    </style>
 </head>
+
 <body>
     <div class="container">
-        <div class="row">
-            <h2 style="text-align:center">Iot</h2>
-            <div class="col">
-                <button onclick="myFunction_SI()" class="choice">Sign In</button>
-                <button onclick="myFunction_SU()" class="choice">Sign Up</button>
-                <button onclick="myFunction_ES()" class="choice">Esqueci a senha</button>
+        <h1>Ar Condicionado IoT - Time 1</h1>
+    </div>
+
+    <div class="sensores">
+        <h2>Monitoramento dos sensores</h2>
+        <div class="container">
+            <div class="container">
+                Temperatura:
             </div>
-    </div> 
-
-    <div class="container" id="Sign_In" style="display: none;">
-        <div id="login-error-msg-holder">
-            <p id="login-error-msg">Invalid username <span id="error-msg-second-line">and/or password</span></p>
+            <div class="container">
+                Umidade:
+            </div>
+            <div class="container">
+                Luminosidade:
+            </div>
+            <div class="container">
+                Movimento:
+            </div>
         </div>
-        <form id="sign_in_form">
-            <div class="row" id="main">
-                <h2 style="text-align:center">Sign In</h2>
-        
-                <div class="col">
-                    <div class="hide-md-lg">
-                        <p></p>
-                    </div>
-                    <input type="email" name="si_email" id="si_email" placeholder="E-mail USP" required>
-                    <input type="password" name="si_pwd" id="si_pwd" placeholder="Senha" required>
-                    <input type="submit" id="si_submit" value="Logar">
-                </div>
-        
-            </div>      
+    </div>
+    <div class="configuracao">
+        <h2>Configuracao do Ar Condicionado</h2>
+        <div class="container">
+            <form class="powerButton" action="#" onsubmit="switchPower();return false">
+                <input type="submit" value="Ligar / Desligar"><br>
+            </form>
 
-        </form>
+            <form id="configForm" action="/config" method="post">
+                <label for="tMin">Temperatura mínima (°C)</label><br>
+                <input type="range" id="tMin" name="tMin" min="16" max="22"><br>
+
+                <label for="tMax">Temperatura máxima (°C)</label><br>
+                <input type="range" id="tMax" name="tMax" min="17" max="23"><br>
+
+                <label for="tMax">Delay entre os comandos (minutos)</label><br>
+                <input type="range" id="tMax" name="tMax" min="1" max="120"><br>
+
+                <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
+                <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
+
+                <input type="submit" value="Aplicar"><br>
+            </form>
+        </div>
     </div>
 
-    <div class="container" id="Sign_Up" style="display: none;">
-        <form id="sign_up_form">
-            <div class="row" id="main">
-                <h2 style="text-align:center">Sign Up</h2>
-                
-                <div class="col">
-                    <div class="hide-md-lg">
-                        <p></p>
-                    </div>
-                    <input type="email" name="su_email" id="su_email" placeholder="E-mail USP" required>
-                    <input type="password" name="su_pwd1" id="su_pwd1" placeholder="Senha" onkeyup="comparePwds()" required>
-                    <input type="password" name="su_pwd2" id="su_pwd2" placeholder="Repetir senha" onkeyup="comparePwds()" required>
-                    <div id="pwd-error-msg-holder" style="display: none;">
-                        <p id="pwd-error-msg">As senhas não coincidem</p>
-                    </div>
-                                
-                    <input type="submit" id="su_submit" value="Cadastrar">
-                </div>
-        
-            </div>      
-        </form>
-    </div>
-
-    <div class="container" id="Esqueci_a_senha" style="display: none;">
-        <form id="esqueci_a_senha_form">
-            <div class="row" id="main">
-                <h2 style="text-align:center">Esqueci a senha</h2>
-        
-                <div class="col">
-                    <div class="hide-md-lg">
-                        <p></p>
-                    </div>
-                    <input type="email" name="es_email" id="es_email" placeholder="E-mail USP" required>
-                    <input type="submit" id="es_submit" value="Enviar nova senha">
-                </div>
-        
-            </div>      
-        </form>
-    </div>
-
-    <script src="app.js"></script>
-    <script src="login.js"></script>
-    <script src="cadastro.js"></script>
-    <noscript>no script, yet</noscript>
+    <script src="/js/app.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 </body>
 </html>

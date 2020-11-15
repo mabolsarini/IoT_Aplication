@@ -1,0 +1,6 @@
+function switchPower() {
+    $.post(
+        "/power",
+        {}
+    );
+}
