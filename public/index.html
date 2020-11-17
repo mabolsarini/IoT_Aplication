@@ -6,36 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="./css/main.css" media="screen" />
     <style>
         html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>Ar Condicionado IoT - Time 1</h1>
-    </div>
+    <nav class="navbar navbar-dark bg-dark">
+        <h1 class="navbar-brand" href="#">
+          <img src="iot-removebg-preview_preview.png" width="30" height="30" class="d-inline-block align-top" >
+          AR CONDICIONADO IOT - time 1
+        </h1>
+    </nav>
+    
+    
 
     <div class="sensores">
         <h2>Monitoramento dos sensores</h2>
-        <div class="container">
-            <div class="container">
-                Temperatura:
-            </div>
-            <div class="container">
-                Umidade:
-            </div>
-            <div class="container">
-                Luminosidade:
-            </div>
-            <div class="container">
-                Movimento:
-            </div>
+        <div class="containerList">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">Temperatura:</li>
+                <li class="list-group-item">Umidade:</li>
+                <li class="list-group-item">Luminosidade:</li>
+                <li class="list-group-item">Movimento:</li>
+            </ul>
         </div>
     </div>
+
     <div class="configuracao">
         <h2>Configuracao do Ar Condicionado</h2>
-        <div class="container">
+        <div class="containerList">
             <form class="powerButton" action="#" onsubmit="switchPower();return false">
                 <input type="submit" value="Ligar / Desligar"><br>
             </form>
