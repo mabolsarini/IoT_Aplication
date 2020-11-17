@@ -1,3 +1,7 @@
+const tMin = document.getElementById("tMin");
+const tMax = document.getElementById("tMax");
+const tOp = document.getElementById("tOp");
+const delay = document.getElementById("delay");
 function switchPower() {
     $.post(
         "/power",
@@ -11,10 +15,30 @@ function changeRangeVal(id){
     const curr = document.getElementById(id);
     const currVal = document.getElementById(id+"Val");
     currVal.innerHTML = curr.value;
+    if(id==="tMin") setTempMin();
+    else if(id=="tMax") setTempMax();
 }
 
+function setTempMin(){
+    tOp.min = tMin.value;
+}
+
+function setTempMax(){
+    tOp.max = tMax.value;
+}
+
+
 function iniValues(){
-    tMinVal.innerHTML = 19;
-    tMaxVal.innerHTML = 20;
-    delayVal.innerHTML = 61;
+    tMin.value = 16;
+    changeRangeVal("tMin");
+    
+    tMax.value = 18;
+    changeRangeVal("tMax");
+
+    tOp.value = 17;
+    changeRangeVal("tOp");
+    
+    delay.value = 10;
+    changeRangeVal("delay");
+
 }
