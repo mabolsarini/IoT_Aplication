@@ -11,7 +11,7 @@
     </style>
 </head>
 
-<body>
+<body onload="iniValues()">
     <div class="container">
         <h1>Ar Condicionado IoT - Time 1</h1>
     </div>
@@ -34,21 +34,21 @@
         </div>
     </div>
     <div class="configuracao">
-        <h2>Configuracao do Ar Condicionado</h2>
-        <div class="container">
-            <form class="powerButton" action="#" onsubmit="switchPower();return false">
-                <input type="submit" value="Ligar / Desligar"><br>
+        <h2>Configuracao do Ar Condicionado</h2> 
+        <div class="container">                
+            <form class="powerButton" action="#" onsubmit="switchPower(); return false">
+                <input id="ioAc" type="submit" value="Ligar"><br>
             </form>
 
             <form id="configForm" action="/config" method="post">
                 <label for="tMin">Temperatura mínima (°C)</label><br>
-                <input type="range" id="tMin" name="tMin" min="16" max="22"><br>
+                <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
 
                 <label for="tMax">Temperatura máxima (°C)</label><br>
-                <input type="range" id="tMax" name="tMax" min="17" max="23"><br>
+                <input type="range" id="tMax" onchange="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
 
-                <label for="tMax">Delay entre os comandos (minutos)</label><br>
-                <input type="range" id="tMax" name="tMax" min="1" max="120"><br>
+                <label for="delay">Delay entre os comandos (minutos)</label><br>
+                <input type="range" id="delay" onchange="changeRangeVal('delay')" name="delay" min="1" max="121"><span id="delayVal"></span><br>
 
                 <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
                 <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
