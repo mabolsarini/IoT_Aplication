@@ -54,7 +54,16 @@ body{
 .containerList {
   position: relative;
   border-radius: 5px;
+  margin: 5px;
   padding: 20px 0 30px 0;
+}
+
+.sensores {
+  margin: 20px;
+}
+
+.configuracao{
+  margin: 20px;
 }
 
 
