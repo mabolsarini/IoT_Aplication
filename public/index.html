@@ -36,28 +36,35 @@
     </div>
 
     <div class="configuracao">
-        <h2>Configuracao do Ar Condicionado</h2> 
+        <h2>Configuração do Ar Condicionado</h2> 
         <div class="containerList">     
                        
             <form class="powerButton" action="#" onsubmit="switchPower(); return false">
-                <input id="ioAc" type="submit" value="Ligar"><br>
+                <input id="ioAc" type="submit"  class="btn btn-primary" value="Ligar"><br>
             </form>
+            
+            <div class="card cardEdit">
+                <form id="configForm" action="/config" method="post">
+                    <label for="tMin">Temperatura mínima (°C)</label><br>
+                    <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
+    
+                    <label for="tMax">Temperatura máxima (°C)</label><br>
+                    <input type="range" id="tMax" onchange="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
+    
+                    <label for="delay">Delay entre os comandos (minutos)</label><br>
+                    <input type="range" id="delay" onchange="changeRangeVal('delay')" name="delay" min="1" max="121"><span id="delayVal"></span><br>
+    
+                    <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
+                    <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
+    
+                   
+                </form>
+            </div>
 
             <form id="configForm" action="/config" method="post">
-                <label for="tMin">Temperatura mínima (°C)</label><br>
-                <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
-
-                <label for="tMax">Temperatura máxima (°C)</label><br>
-                <input type="range" id="tMax" onchange="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
-
-                <label for="delay">Delay entre os comandos (minutos)</label><br>
-                <input type="range" id="delay" onchange="changeRangeVal('delay')" name="delay" min="1" max="121"><span id="delayVal"></span><br>
-
-                <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
-                <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
-
-                <input type="submit" value="Aplicar"><br>
+                <input type="button" class="btn btn-success" value="Aplicar"><br>
             </form>
+            
         </div>
     </div>
 
