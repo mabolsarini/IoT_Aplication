@@ -36,6 +36,9 @@ function validStateParams(params) {
     if (params.tMax < 17 || params.tMax > 23) {
         return false;
     }
+    if (params.tMax < params.tMin) {
+        return false;
+    }
     if (params.Delay < 1 || params.Delay > 120) {
         return false;
     }
