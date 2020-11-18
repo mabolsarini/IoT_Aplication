@@ -1,4 +1,5 @@
 const express = require('express');
+const bodyParser = require("body-parser");
 const mqtt = require('mqtt');
 const app = express();
 const http = require('http').createServer(app);
@@ -11,42 +12,86 @@ const config = {
 }
 const broker = mqtt.connect('mqtt://'+config.brokerEndpoint);
 
+// Mock do estado
 var acState = {
-    Power: 0,
-    PowerOnIdle: 0,
-    TMin: 16,
-    TMax: 18,
+    Power: true,
+    PPowerOnIdle: true,
+    tMin: 16,
+    tMax: 18,
     Delay: 1,
     Temp: 17
 }
 
-function sendMessage(state) {
-    console.log(state);
+var sensors = {
+    Lumi: 1,
+    Umi: 2,
+    Move: 3,
+    Temp: 4
 }
 
-function switchAcPower() {
-    acState.Power = !acState.Power;
-    sendMessage(acState);
+function validStateParams(params) {
+    if (params.tMin < 16 || params.tMin > 22) {
+        return false;
+    }
+    if (params.tMax < 17 || params.tMax > 23) {
+        return false;
+    }
+    if (params.Delay < 1 || params.Delay > 120) {
+        return false;
+    }
+    if (params.Temp < 16 || params.Temp > 23) {
+        return false;
+    }
+    return true;
 }
 
-function updateAcConfig(config) {
-    Object.assign(acState, config);
-    sendMessage(acState);
+function setAcState(state, params) {
+    delete params["Power"];
+
+    Object.keys(params).forEach( key => {
+        if (key in state) {
+            state[key] = params[key];
+        }
+    })
+    return state;
 }
 
+function switchAcPower(state) {
+    state.Power = !state.Power;
+
+    return state;
+}
+
+function sendMessage(msg) {
+    console.log("Sent message "+msg);
+}
+
+// Roteamento
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
-app.get('/', (req, res) => {
-})
+app.route('/state')
+    .get((req, res) => {
+        res.send(acState);
+    })
+    .post((req, res) => {
+        var params = req.body;
+        if (validStateParams(params)) {
+            setAcState(acState, params);
+            res.redirect('/');
+        } else {
+            res.sendStatus(400);
+        }
+    })
+;
 
+app.get('/sensors', (req, res) => {
+    res.send(sensors);
+})
+    
 app.post('/power', (req, res) => {
-    console.log(req.body);
-    // switchAcPower();
-})
-
-app.post('/config', (req, res) => {
-    console.log(req.body);
-    // updateAcConfig();
+    switchAcPower(acState);
     res.redirect('/');
 })
 
