@@ -16,7 +16,7 @@
 <body onload="iniValues()">
     <nav class="navbar navbar-dark bg-dark">
         <h1 class="navbar-brand" href="#">
-          <img src="iot-removebg-preview_preview.png" width="30" height="30" class="d-inline-block align-top" >
+          <img src="./images/iot.png" width="30" height="30" class="d-inline-block align-top" >
           AR CONDICIONADO IOT - time 1
         </h1>
     </nav>
@@ -24,11 +24,11 @@
     <div class="sensores">
         <h2>Monitoramento dos sensores</h2>
         <div class="containerList">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">Temperatura:</li>
-                <li class="list-group-item">Umidade:</li>
-                <li class="list-group-item">Luminosidade:</li>
-                <li class="list-group-item">Movimento:</li>
+            <ul class="list-group list-group-flush">   
+                <li class="list-group-item"><img src="./images/frio.png" width="30" height="30" class="d-inline-block align-top" ><text class="textList">Temperatura:</text></li>
+                <li class="list-group-item"><img src="./images/umidade.png" width="30" height="30" class="d-inline-block align-top" >Umidade:</li>
+                <li class="list-group-item"><img src="./images/lampada.png" width="30" height="30" class="d-inline-block align-top" >Luminosidade:</li>
+                <li class="list-group-item"><img src="./images/sensor-de-movimento.png" width="30" height="30" class="d-inline-block align-top" >Movimento:</li>
             </ul>
         </div>
     </div>
@@ -44,25 +44,33 @@
             <div id="cardConfig" class="card cardEdit" style="display: block;">
                 <form id="configForm" action="/state" method="post" onsubmit="submitConfig()">
                     <label for="tMin">Temperatura mínima (°C)</label><br>
-                    <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
+                    <input type="range" id="tMin" oninput="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
     
                     <label for="tMax">Temperatura máxima (°C)</label><br>
-                    <input type="range" id="tMax" onchange="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
+                    <input type="range" id="tMax" oninput="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
     
                     <label for="tOp">Temperatura de operação (°C)</label><br>
-                    <input type="range" id="tOp" onchange="changeRangeVal('tOp')" name="tOp" min="16" max="23"><span id="tOpVal"></span><br>
+                    <input type="range" id="tOp" oninput="changeRangeVal('tOp')" name="tOp" min="16" max="23"><span id="tOpVal"></span><br>
     
-                    <label for="Delay">Delay entre os comandos (minutos)</label><br>
-                    <input type="range" id="Delay" onchange="changeRangeVal('Delay')" name="Delay" min="1" max="120"><span id="delayVal"></span><br>
+                    <label for="delay">Delay entre os comandos (minutos)</label><br>
+                    <input type="range" id="delay" oninput="changeRangeVal('delay')" name="delay" min="1" max="120"><span id="delayVal"></span><br>
     
-                    <input type="checkbox" id="PowerOnIdle" name="onIdle" value="onIdle">
+                    <input type="checkbox" id="PowerOnIdle" name="onIdle" value="false">
                     <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
                     
                     <input type="submit" class="btn btn-success" value="Aplicar"><br>
                 </form>
             </div>
         </div>
+
+        
     </div>
+
+    <footer class="footer-box ">
+        <div>
+            <p class="p-footer">2020 - Time 1 IOT</p>
+        </div>
+    </footer>
 
     <script src="/js/app.js"></script>
     <script src="/socket.io/socket.io.js"></script>

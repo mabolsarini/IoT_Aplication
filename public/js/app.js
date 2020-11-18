@@ -1,8 +1,8 @@
 const tMin = document.getElementById("tMin");
 const tMax = document.getElementById("tMax");
 const tOp = document.getElementById("tOp");
-const Delay = document.getElementById("Delay");
-const PowerOnIdle = document.getElementById("PowerOnIdle");
+const Delay = document.getElementById("delay");
+const PowerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
 
 function validConfig(params) {
