@@ -46,7 +46,7 @@ function validStateParams(params) {
     if (params.Delay < 1 || params.Delay > 120) {
         return false;
     }
-    if (params.tOp < 16 || params.tOp > 23) {
+    if (params.tOp < params.tMin || params.tOp > params.tMax) {
         return false;
     }
     return true;
