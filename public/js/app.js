@@ -20,10 +20,26 @@ function changeRangeVal(id){
 }
 
 function setTempMin(){
+    const currVal = document.getElementById("tOpVal");
+    
+    if (currVal.innerHTML==="Invalido" && tMin.value <= tMax.value) currVal.innerHTML = tMin.value; 
+    else if(tMin.value > tMax.value) currVal.innerHTML = "Invalido";
+    else if(tMin.value > tOp.value){
+        tOp.value = tMin.value;
+        changeRangeVal("tOp");
+    }
     tOp.min = tMin.value;
 }
 
 function setTempMax(){
+    const currVal = document.getElementById("tOpVal");
+
+    if (currVal.innerHTML==="Invalido" && tMin.value <= tMax.value) currVal.innerHTML = tMax.value; 
+    else if(tMin.value > tMax.value) currVal.innerHTML = "Invalido";
+    else if(tMax.value < tOp.value){
+        tOp.value = tMax.value;
+        changeRangeVal("tOp");
+    }
     tOp.max = tMax.value;
 }
 
