@@ -95,12 +95,20 @@ function initValues(){
     });
 
     $.get('/sensors', data => {
-        sensors = data;
+        updateSensorValues(data);
     });
-    
-    for(i=1; i<=sensors.Temp.length; i++) document.getElementById("Temp_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Temp[i-1] + '</span>';
-    for(i=1; i<=sensors.Umid.length; i++) document.getElementById("Umid_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Umid[i-1] + '</span>';    
-    for(i=1; i<=sensors.Lumi.length; i++) document.getElementById("Lumi_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Lumi[i-1] + '</span>';
-    for(i=1; i<=sensors.Move.length; i++) document.getElementById("Move_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Move[i-1] + '</span>';
-
+}
+function updateSensorValues(data) {
+    for(i=1; i<=data.Temp.length; i++) {
+        document.getElementById("Temp_"+i).innerHTML += '<span style="color: blue;">'+ data.Temp[i-1] + '</span>';
+    }
+    for(i=1; i<=data.Umid.length; i++) {
+        document.getElementById("Umid_"+i).innerHTML += '<span style="color: blue;">'+ data.Umid[i-1] + '</span>';    
+    }
+    for(i=1; i<=data.Lumi.length; i++) {
+        document.getElementById("Lumi_"+i).innerHTML += '<span style="color: blue;">'+ data.Lumi[i-1] + '</span>';
+    }
+    for(i=1; i<=data.Move.length; i++) {
+        document.getElementById("Move_"+i).innerHTML += '<span style="color: blue;">'+ data.Move[i-1] + '</span>';
+    }
 }
