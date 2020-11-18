@@ -43,7 +43,7 @@
                 <input id="ioAc" type="submit"  class="btn btn-primary" value="Desligar"><br>
             </form>
             
-            <div class="card cardEdit">
+            <div id="cardConfig" class="card cardEdit" style="display: block;">
                 <form id="configForm" action="/config" method="post">
                     <label for="tMin">Temperatura mínima (°C)</label><br>
                     <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
