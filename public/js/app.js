@@ -3,6 +3,15 @@ const tMax = document.getElementById("tMax");
 const tOp = document.getElementById("tOp");
 const delay = document.getElementById("delay");
 const cardConfig = document.getElementById("cardConfig");
+
+function submitConfig(){
+    if(tMin.value > tMax.value){
+        alert("Erro");
+        return false;
+    }
+    return true;
+}
+
 function switchPower() {
     $.post(
         "/power",
