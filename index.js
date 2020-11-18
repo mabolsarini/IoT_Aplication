@@ -22,13 +22,6 @@ var acState = {
     Temp: 17
 }
 
-var sensors = {
-    Lumi: 1,
-    Umi: 2,
-    Move: 3,
-    Temp: 4
-}
-
 function validStateParams(params) {
     if (params.tMin < 16 || params.tMin > 22) {
         return false;

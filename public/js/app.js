@@ -4,6 +4,25 @@ const tOp = document.getElementById("tOp");
 const delay = document.getElementById("delay");
 const cardConfig = document.getElementById("cardConfig");
 
+
+var sensors = {
+    Temp : [1.1,
+            1.2,
+            1.3,
+            1.4,
+            1.5,
+            1.6],
+
+    Umid : [2.1],
+
+    Lumi:  [3.1,
+            3.2],
+
+    Move:  [4.1,
+            4.2]
+}
+
+
 function submitConfig(){
     if(tMin.value > tMax.value){
         alert("Erro");
@@ -78,5 +97,10 @@ function iniValues(){
     
     delay.value = 10;
     changeRangeVal("delay");
+
+    for(i=1;i<=6;i++) document.getElementById("Temp_"+i).innerHTML += sensors.Temp[i-1];
+    for(i=1;i<=1;i++) document.getElementById("Umid_"+i).innerHTML += sensors.Umid[i-1];    
+    for(i=1;i<=2;i++) document.getElementById("Lumi_"+i).innerHTML += sensors.Lumi[i-1];
+    for(i=1;i<=2;i++) document.getElementById("Move_"+i).innerHTML += sensors.Move[i-1];
 
 }
