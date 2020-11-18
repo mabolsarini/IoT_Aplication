@@ -1,28 +1,62 @@
 const tMin = document.getElementById("tMin");
 const tMax = document.getElementById("tMax");
 const tOp = document.getElementById("tOp");
-const delay = document.getElementById("delay");
+const Delay = document.getElementById("Delay");
+const PowerOnIdle = document.getElementById("PowerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
 
-function submitConfig(){
-    if(tMin.value > tMax.value){
-        alert("Erro");
+function validConfig(params) {
+    if (params.tMin < 16 || params.tMin > 22) {
         return false;
+    }
+    if (params.tMax < 17 || params.tMax > 23) {
+        return false;
+    }
+    if (params.tMax < params.tMin) {
+        return false;
+    }
+    if (params.Delay < 1 || params.Delay > 120) {
+        return false;
+    }
+    if (params.tOp < 16 || params.tOp > 23) {
+        return false;
+    }
+    return true;
+}
+
+function submitConfig() {
+    config = {
+        "PowerOnIdle": PowerOnIdle.value,
+        "tMin": tMin.value,
+        "tMax": tMax.value,
+        "tOp": tOp.value,
+        "Delay": Delay.value
+    }
+
+    console.log(config);
+
+    if(validConfig(config)) {
+        $.post(
+            "/state",
+            config
+        );
+    } else {
+        alert("Por favor, insira uma configuração válida.");
+        return false;        
     }
     return true;
 }
 
 function switchPower() {
     $.post(
-        "/power",
-        {}
+        "/power"
     );
-    if(ioAc.value == "Ligar"){
-        ioAc.value = "Desligar";
+    if(power.value == "Ligar"){
+        power.value = "Desligar";
         cardConfig.style.display = "block";
     }
     else{
-        ioAc.value = "Ligar";
+        power.value = "Ligar";
         cardConfig.style.display = "none";
     }
     
@@ -76,7 +110,7 @@ function iniValues(){
     tOp.value = 17;
     changeRangeVal("tOp");
     
-    delay.value = 10;
-    changeRangeVal("delay");
+    Delay.value = 10;
+    changeRangeVal("Delay");
 
 }

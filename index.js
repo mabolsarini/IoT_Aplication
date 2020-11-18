@@ -15,11 +15,11 @@ const broker = mqtt.connect('mqtt://'+config.brokerEndpoint);
 // Mock do estado
 var acState = {
     Power: true,
-    PPowerOnIdle: true,
+    PowerOnIdle: true,
     tMin: 16,
     tMax: 18,
+    tOp: 17,
     Delay: 1,
-    Temp: 17
 }
 
 var sensors = {
@@ -42,7 +42,7 @@ function validStateParams(params) {
     if (params.Delay < 1 || params.Delay > 120) {
         return false;
     }
-    if (params.Temp < 16 || params.Temp > 23) {
+    if (params.tOp < 16 || params.tOp > 23) {
         return false;
     }
     return true;
@@ -95,7 +95,7 @@ app.get('/sensors', (req, res) => {
     
 app.post('/power', (req, res) => {
     switchAcPower(acState);
-    res.redirect('/');
+    res.sendStatus(200);
 })
 
 app.use(function(req, res, next) {
