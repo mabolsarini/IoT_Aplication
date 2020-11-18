@@ -8,6 +8,7 @@ function switchPower() {
         {}
     );
     ioAc.value == "Ligar" ? ioAc.value = "Desligar" : ioAc.value = "Ligar";
+    
     return true;
 }
 
