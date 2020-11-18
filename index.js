@@ -30,6 +30,9 @@ var sensors = {
 }
 
 function validStateParams(params) {
+    if ('PowerOnIdle' in params && params.PowerOnIdle !== "on") {
+        return false;
+    }
     if (params.tMin < 16 || params.tMin > 22) {
         return false;
     }
@@ -56,12 +59,18 @@ function setAcState(state, params) {
             state[key] = params[key];
         }
     })
+    if ('PowerOnIdle' in params) {
+        if (params.PowerOnIdle === "on") {
+            state.PowerOnIdle = true;
+        }
+    } else {
+            state.PowerOnIdle = false;
+    }
     return state;
 }
 
 function switchAcPower(state) {
     state.Power = !state.Power;
-
     return state;
 }
 
@@ -80,6 +89,7 @@ app.route('/state')
     })
     .post((req, res) => {
         var params = req.body;
+        
         if (validStateParams(params)) {
             setAcState(acState, params);
             res.redirect('/');

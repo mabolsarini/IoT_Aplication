@@ -4,60 +4,30 @@ const tOp = document.getElementById("tOp");
 const Delay = document.getElementById("delay");
 const PowerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
+var isPowered;
+var sensors;
 
-function validConfig(params) {
-    if (params.tMin < 16 || params.tMin > 22) {
-        return false;
-    }
-    if (params.tMax < 17 || params.tMax > 23) {
-        return false;
-    }
-    if (params.tMax < params.tMin) {
-        return false;
-    }
-    if (params.Delay < 1 || params.Delay > 120) {
-        return false;
-    }
-    if (params.tOp < 16 || params.tOp > 23) {
-        return false;
-    }
-    return true;
+function powerOff() {
+    isPowered = false;
+    power.value = "Ligar";
+    cardConfig.style.display = "none";
 }
 
-function submitConfig() {
-    config = {
-        "PowerOnIdle": PowerOnIdle.value,
-        "tMin": tMin.value,
-        "tMax": tMax.value,
-        "tOp": tOp.value,
-        "Delay": Delay.value
-    }
-
-    console.log(config);
-
-    if(validConfig(config)) {
-        $.post(
-            "/state",
-            config
-        );
-    } else {
-        alert("Por favor, insira uma configuração válida.");
-        return false;        
-    }
-    return true;
+function powerOn() {
+    isPowered = true;
+    power.value = "Desligar";
+    cardConfig.style.display = "block";
 }
 
 function switchPower() {
     $.post(
         "/power"
     );
-    if(power.value == "Ligar"){
-        power.value = "Desligar";
-        cardConfig.style.display = "block";
-    }
-    else{
-        power.value = "Ligar";
-        cardConfig.style.display = "none";
+
+    if (isPowered) {
+        powerOff();
+    } else {
+        powerOn();
     }
     
     return true;
@@ -100,17 +70,31 @@ function setTempMax(){
 }
 
 
-function iniValues(){
-    tMin.value = 16;
-    changeRangeVal("tMin");
-    
-    tMax.value = 18;
-    changeRangeVal("tMax");
+function initValues(){
+    $.get('/state', data => {
+        isPowered = data.Power;
+        if (isPowered) {
+            powerOn();
+        } else {
+            powerOff();
+        }
 
-    tOp.value = 17;
-    changeRangeVal("tOp");
+        tMin.value = data.tMin;
+        changeRangeVal("tMin");
+        
+        tMax.value = data.tMax;
+        changeRangeVal("tMax");
     
-    Delay.value = 10;
-    changeRangeVal("Delay");
+        tOp.value = data.tMop;
+        changeRangeVal("tOp");
+        
+        Delay.value = data.Delay;
+        changeRangeVal("delay");
+    
+        PowerOnIdle.checked = data.PowerOnIdle;
+    });
 
+    $.get('/sensors', data => {
+        sensors = data;
+    });
 }
