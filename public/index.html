@@ -26,27 +26,16 @@
         <div class="containerList">
             <ul class="list-group list-group-flush">   
                 <li class="list-group-item"><img src="./images/frio.png" width="30" height="30" class="d-inline-block align-top imagem-espacada" ><text class="textList">Temperatura:</text>
-                <ul class= "espacamento-horizontal">
-                    <li class="list-subgroup-item" id="Temp_1">1 : </li>
-                    <li class="list-subgroup-item" id="Temp_2">2 : </li>
-                    <li class="list-subgroup-item" id="Temp_3">3 : </li>
-                    <li class="list-subgroup-item" id="Temp_4">4 : </li>
-                    <li class="list-subgroup-item" id="Temp_5">5 : </li>
-                    <li class="list-subgroup-item" id="Temp_6">6 : </li>
+                <ul class= "espacamento-horizontal" id="Temp_List">
                 </ul></li>
                 <li class="list-group-item"><img src="./images/umidade.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Umidade:
-                <ul class= "espacamento-horizontal">
-                    <li class="list-subgroup-item" id="Umid_1">1 : </li>
+                <ul class= "espacamento-horizontal" id="Umid_List">
                 </ul></li>
                 <li class="list-group-item"><img src="./images/lampada.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Luminosidade:
-                <ul class= "espacamento-horizontal">
-                    <li class="list-subgroup-item" id="Lumi_1">1 : </li>
-                    <li class="list-subgroup-item" id="Lumi_2">2 : </li>
+                <ul class= "espacamento-horizontal" id="Lumi_List">
                 </ul></li>
                 <li class="list-group-item"><img src="./images/sensor-de-movimento.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Movimento:
-                <ul class= "espacamento-horizontal">
-                    <li class="list-subgroup-item" id="Move_1">1 : </li>
-                    <li class="list-subgroup-item" id="Move_2">2 : </li>
+                <ul class= "espacamento-horizontal" id="Move_List">
                 </ul></li>
             </ul>
         </div>
@@ -61,7 +50,7 @@
             </form>
             
             <div id="cardConfig" class="card cardEdit" style="display: block;">
-                <form id="configForm" action="/config" method="post" onsubmit="submitConfig(); return tMin.value > tMax.value ? false : true">
+                <form id="configForm" action="/config" method="post" onsubmit="submitConfig(); return toSubmit">
                     <label for="tMin">Temperatura mínima (°C)</label><br>
                     <input type="range" id="tMin" oninput="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
     
