@@ -5,6 +5,10 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
 const config = {
     hostname: '127.0.0.1',
     port: 8080,
@@ -14,25 +18,42 @@ const broker = mqtt.connect('mqtt://'+config.brokerEndpoint);
 
 // Mock do estado
 var acState = {
-    Power: true,
-    PowerOnIdle: true,
+    power: true,
+    powerOnIdle: true,
     tMin: 16,
     tMax: 18,
     tOp: 17,
-    Delay: 1,
+    delay: 10,
 }
 
-var sensors = {
-    Temp : [1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
-    Umid : [2.1],
-    Lumi:  [3.1, 3.2],
-    Move:  [4.1, 4.2]
+// topico sala_ID/type/sensor_ID
+// temp {“s”:”dd/mm/aaaa hh:mm:ss”,”0”:21,“temp”:xx}
+// umid {“s”:”dd/mm/aaaa hh:mm:ss”,”0”:29,“umid”:xx}
+// luz {“s”:”dd/mm/aaaa hh:mm:ss”,“21”:x,”0”:26}
+// movimento  {“s”:”dd/mm/aaaa hh:mm:ss”,”0”:32}
+
+var sensors = [
+    {name: "20", type: "temp", value: "20.0"},
+    {name: "21", type: "temp", value: "21.0"},
+    {name: "22", type: "temp", value: "22.0"},
+    {name: "20", type: "umid", value: "20.1"},
+    {name: "21", type: "umid", value: "21.1"},
+    {name: "22", type: "umid", value: "22.1"},
+    {name: "26", type: "luz", value: "26.0"},
+    {name: "25", type: "movimento", value: "25.0"}
+];
+
+function castStateParams(reqBody) {
+    return {
+        tMin: parseInt(reqBody.tMin),
+        tMax: parseInt(reqBody.tMax),
+        tOp: parseInt(reqBody.tOp),
+        delay: parseInt(reqBody.delay),
+        powerOnIdle: (reqBody.powerOnIdle === 'true')
+    }
 }
 
 function validStateParams(params) {
-    if ('PowerOnIdle' in params && params.PowerOnIdle !== "on") {
-        return false;
-    }
     if (params.tMin < 16 || params.tMin > 22) {
         return false;
     }
@@ -52,25 +73,16 @@ function validStateParams(params) {
 }
 
 function setAcState(state, params) {
-    delete params["Power"];
-
     Object.keys(params).forEach( key => {
         if (key in state) {
             state[key] = params[key];
         }
     })
-    if ('PowerOnIdle' in params) {
-        if (params.PowerOnIdle === "on") {
-            state.PowerOnIdle = true;
-        }
-    } else {
-            state.PowerOnIdle = false;
-    }
     return state;
 }
 
 function switchAcPower(state) {
-    state.Power = !state.Power;
+    state.power = !state.power;
     return state;
 }
 
@@ -78,22 +90,27 @@ function sendMessage(msg) {
     console.log("Sent message "+msg);
 }
 
+function logState(msg) {
+    var now = new Date();
+    console.log(now.toISOString()+" "+msg+": "+JSON.stringify(acState));
+}
+
 // Roteamento
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(express.static('public'));
 
 app.route('/state')
     .get((req, res) => {
         res.send(acState);
     })
-    .post((req, res) => {
-        var params = req.body;
-        
+    .post((req, res) => {        
+        params = castStateParams(req.body);
+
         if (validStateParams(params)) {
             setAcState(acState, params);
-            res.redirect('/');
+
+            logState("Novo estado recebido");
+            res.status(200);
         } else {
+            logState("Configuracao de estado invalida recebida");
             res.sendStatus(400);
         }
     })
@@ -104,8 +121,10 @@ app.get('/sensors', (req, res) => {
 })
     
 app.post('/power', (req, res) => {
-    switchAcPower(acState);
-    res.sendStatus(200);
+    acState = switchAcPower(acState);
+
+    logState("Novo estado recebido");
+    res.status(200);
 })
 
 app.use(function(req, res, next) {
