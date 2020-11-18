@@ -44,7 +44,7 @@
             </form>
             
             <div id="cardConfig" class="card cardEdit" style="display: block;">
-                <form id="configForm" action="/config" method="post" onsubmit="submitConfig()">
+                <form id="configForm" action="/config" method="post" onsubmit="submitConfig(); return tMin.value > tMax.value ? false : true">
                     <label for="tMin">Temperatura mínima (°C)</label><br>
                     <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
     
