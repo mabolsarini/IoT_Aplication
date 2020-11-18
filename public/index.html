@@ -13,7 +13,7 @@
     </style>
 </head>
 
-<body>
+<body onload="iniValues()">
     <nav class="navbar navbar-dark bg-dark">
         <h1 class="navbar-brand" href="#">
           <img src="iot-removebg-preview_preview.png" width="30" height="30" class="d-inline-block align-top" >
@@ -56,14 +56,13 @@
     
                     <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
                     <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
-    
+                    
+                    <input type="submit" class="btn btn-success" value="Aplicar"><br>
                    
                 </form>
             </div>
 
-            <form id="configForm" action="/config" method="post">
-                <input type="button" class="btn btn-success" value="Aplicar"><br>
-            </form>
+            
             
         </div>
     </div>
