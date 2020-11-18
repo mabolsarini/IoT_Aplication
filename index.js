@@ -15,14 +15,24 @@ const broker = mqtt.connect('mqtt://'+config.brokerEndpoint);
 // Mock do estado
 var acState = {
     Power: true,
-    PPowerOnIdle: true,
+    PowerOnIdle: true,
     tMin: 16,
     tMax: 18,
+    tOp: 17,
     Delay: 1,
-    Temp: 17
+}
+
+var sensors = {
+    Temp : [1.1, 1.2, 1.3, 1.4, 1.5, 1.6],
+    Umid : [2.1],
+    Lumi:  [3.1, 3.2],
+    Move:  [4.1, 4.2]
 }
 
 function validStateParams(params) {
+    if ('PowerOnIdle' in params && params.PowerOnIdle !== "on") {
+        return false;
+    }
     if (params.tMin < 16 || params.tMin > 22) {
         return false;
     }
@@ -35,7 +45,7 @@ function validStateParams(params) {
     if (params.Delay < 1 || params.Delay > 120) {
         return false;
     }
-    if (params.Temp < 16 || params.Temp > 23) {
+    if (params.tOp < 16 || params.tOp > 23) {
         return false;
     }
     return true;
@@ -49,12 +59,18 @@ function setAcState(state, params) {
             state[key] = params[key];
         }
     })
+    if ('PowerOnIdle' in params) {
+        if (params.PowerOnIdle === "on") {
+            state.PowerOnIdle = true;
+        }
+    } else {
+            state.PowerOnIdle = false;
+    }
     return state;
 }
 
 function switchAcPower(state) {
     state.Power = !state.Power;
-
     return state;
 }
 
@@ -73,6 +89,7 @@ app.route('/state')
     })
     .post((req, res) => {
         var params = req.body;
+        
         if (validStateParams(params)) {
             setAcState(acState, params);
             res.redirect('/');
@@ -88,7 +105,7 @@ app.get('/sensors', (req, res) => {
     
 app.post('/power', (req, res) => {
     switchAcPower(acState);
-    res.redirect('/');
+    res.sendStatus(200);
 })
 
 app.use(function(req, res, next) {

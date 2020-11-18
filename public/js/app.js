@@ -1,9 +1,12 @@
 const tMin = document.getElementById("tMin");
 const tMax = document.getElementById("tMax");
 const tOp = document.getElementById("tOp");
-const delay = document.getElementById("delay");
+const Delay = document.getElementById("delay");
+const PowerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
+const power = document.getElementById("power");
 var toSubmit = false;
+var isPowered = true;
 
 var sensorsQtty = {
     Temp : 6,
@@ -38,18 +41,27 @@ function submitConfig(){
     else toSubmit = true;
 }
 
+function powerOff() {
+    isPowered = false;
+    power.value = "Ligar";
+    cardConfig.style.display = "none";
+}
+
+function powerOn() {
+    isPowered = true;
+    power.value = "Desligar";
+    cardConfig.style.display = "block";
+}
+
 function switchPower() {
     $.post(
-        "/power",
-        {}
+        "/power"
     );
-    if(ioAc.value == "Ligar"){
-        ioAc.value = "Desligar";
-        cardConfig.style.display = "block";
-    }
-    else{
-        ioAc.value = "Ligar";
-        cardConfig.style.display = "none";
+
+    if (isPowered) {
+        powerOff();
+    } else {
+        powerOn();
     }
     
     return true;
@@ -102,15 +114,26 @@ function addSensors(name,pos,mocar) {
 
 }
 
-function iniValues(){
-    tMin.value = 16;
-    changeRangeVal("tMin");
-    
-    tMax.value = 18;
-    changeRangeVal("tMax");
+function initValues(){
+    $.get('/state', data => {
+        isPowered = data.Power;
+        if (isPowered) {
+            powerOn();
+        } else {
+            powerOff();
+        }
 
-    tOp.value = 17;
-    changeRangeVal("tOp");
+        tMin.value = data.tMin;
+        changeRangeVal("tMin");
+        
+        tMax.value = data.tMax;
+        changeRangeVal("tMax");
+    
+        tOp.value = data.tMop;
+        changeRangeVal("tOp");
+        
+        Delay.value = data.Delay;
+        changeRangeVal("delay");
     
     delay.value = 10;
     changeRangeVal("delay");
@@ -119,5 +142,24 @@ function iniValues(){
     for(i=1;i<=sensorsQtty.Umid;i++) addSensors("Umid",i,true);
     for(i=1;i<=sensorsQtty.Lumi;i++) addSensors("Lumi",i,true);
     for(i=1;i<=sensorsQtty.Move;i++) addSensors("Move",i,true);
+        PowerOnIdle.checked = data.PowerOnIdle;
+    });
 
+    $.get('/sensors', data => {
+        updateSensorValues(data);
+    });
+}
+function updateSensorValues(data) {
+    for(i=1; i<=data.Temp.length; i++) {
+        document.getElementById("Temp_"+i).innerHTML += '<span style="color: blue;">'+ data.Temp[i-1] + '</span>';
+    }
+    for(i=1; i<=data.Umid.length; i++) {
+        document.getElementById("Umid_"+i).innerHTML += '<span style="color: blue;">'+ data.Umid[i-1] + '</span>';    
+    }
+    for(i=1; i<=data.Lumi.length; i++) {
+        document.getElementById("Lumi_"+i).innerHTML += '<span style="color: blue;">'+ data.Lumi[i-1] + '</span>';
+    }
+    for(i=1; i<=data.Move.length; i++) {
+        document.getElementById("Move_"+i).innerHTML += '<span style="color: blue;">'+ data.Move[i-1] + '</span>';
+    }
 }
