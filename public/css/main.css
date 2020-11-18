@@ -35,7 +35,12 @@ input[type='range']::-webkit-slider-thumb {
   width:10px;
 }
 
-
+.topicoSensor{
+  align-items: center;
+  justify-self: center;
+  justify-content: center;
+  align-content: center;
+}
 
 
 
