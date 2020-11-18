@@ -2,12 +2,20 @@ const tMin = document.getElementById("tMin");
 const tMax = document.getElementById("tMax");
 const tOp = document.getElementById("tOp");
 const delay = document.getElementById("delay");
+const cardConfig = document.getElementById("cardConfig");
 function switchPower() {
     $.post(
         "/power",
         {}
     );
-    ioAc.value == "Ligar" ? ioAc.value = "Desligar" : ioAc.value = "Ligar";
+    if(ioAc.value == "Ligar"){
+        ioAc.value = "Desligar";
+        cardConfig.style.display = "block";
+    }
+    else{
+        ioAc.value = "Ligar";
+        cardConfig.style.display = "none";
+    }
     
     return true;
 }
