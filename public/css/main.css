@@ -11,7 +11,15 @@ body{
   margin: 5px;
   padding: 20px 0 30px 0;
 }
-
+.imagem-espacada{
+  margin-right: 10px;
+}
+.espacamento-horizontal{
+  display : flex;
+}
+.list-subgroup-item{
+  margin-right : 50px; 
+}
 .sensores {
   margin: 20px;
 }

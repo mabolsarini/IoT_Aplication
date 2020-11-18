@@ -98,9 +98,9 @@ function iniValues(){
     delay.value = 10;
     changeRangeVal("delay");
 
-    for(i=1;i<=6;i++) document.getElementById("Temp_"+i).innerHTML += sensors.Temp[i-1];
-    for(i=1;i<=1;i++) document.getElementById("Umid_"+i).innerHTML += sensors.Umid[i-1];    
-    for(i=1;i<=2;i++) document.getElementById("Lumi_"+i).innerHTML += sensors.Lumi[i-1];
-    for(i=1;i<=2;i++) document.getElementById("Move_"+i).innerHTML += sensors.Move[i-1];
+    for(i=1;i<=6;i++) document.getElementById("Temp_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Temp[i-1] + '</span>';
+    for(i=1;i<=1;i++) document.getElementById("Umid_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Umid[i-1] + '</span>';    
+    for(i=1;i<=2;i++) document.getElementById("Lumi_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Lumi[i-1] + '</span>';
+    for(i=1;i<=2;i++) document.getElementById("Move_"+i).innerHTML += '<span style="color: blue;">'+ sensors.Move[i-1] + '</span>';
 
 }
