@@ -22,8 +22,10 @@ function changeRangeVal(id){
 function setTempMin(){
     const currVal = document.getElementById("tOpVal");
     
-    if (currVal.innerHTML==="Invalido" && tMin.value <= tMax.value) currVal.innerHTML = tMin.value; 
-    else if(tMin.value > tMax.value) currVal.innerHTML = "Invalido";
+    if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
+        currVal.innerHTML = tMin.value;
+    } 
+    else if(tMin.value > tMax.value) currVal.innerHTML = "<span style='color: red;'>Invalido</span>";
     else if(tMin.value > tOp.value){
         tOp.value = tMin.value;
         changeRangeVal("tOp");
@@ -34,8 +36,10 @@ function setTempMin(){
 function setTempMax(){
     const currVal = document.getElementById("tOpVal");
 
-    if (currVal.innerHTML==="Invalido" && tMin.value <= tMax.value) currVal.innerHTML = tMax.value; 
-    else if(tMin.value > tMax.value) currVal.innerHTML = "Invalido";
+    if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
+        currVal.innerHTML = tMax.value;
+    }
+    else if(tMin.value > tMax.value) currVal.innerHTML = "<span style='color: red;'>Invalido</span>";
     else if(tMax.value < tOp.value){
         tOp.value = tMax.value;
         changeRangeVal("tOp");
