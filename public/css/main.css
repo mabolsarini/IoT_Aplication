@@ -45,98 +45,43 @@
 }
 
 body{
-  background: rgba(0, 128, 0, 0.3);
+  
   font-family: helvetica;
 }
 * {box-sizing: border-box}
 
 /* style the container */
-.container {
+.containerList {
   position: relative;
   border-radius: 5px;
-  background-color: #f2f2f2;
+  margin: 5px;
   padding: 20px 0 30px 0;
 }
 
-/* style inputs and link buttons */
-input,
-.btn {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  margin: 5px 0;
-  opacity: 0.85;
-  display: inline-block;
-  font-size: 17px;
-  line-height: 20px;
-  text-decoration: none; /* remove underline from anchors */
+.sensores {
+  margin: 20px;
 }
 
-input:hover,
-.btn:hover {
-  opacity: 1;
+.configuracao{
+  margin: 20px;
 }
 
-.choice{
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  margin: 5px 0;
-  opacity: 0.85;
-  display: inline-block;
-  font-size: 17px;
-  line-height: 20px;
-  text-decoration: none; /* remove underline from anchors */
-  background-color: #4CAF50;
-  color: white;
-  cursor: pointer;
-}
-.choice:hover{
-  opacity: 1;
-  background-color: #45a049; 
+.cardEdit{
+  margin: 20px 0;
+  width: 50%;
+  padding: 1%;
 }
 
-/* style the submit button */
-input[type=submit] {
-  background-color: #4CAF50;
-  color: white;
-  cursor: pointer;
+input[type='range'] {
+  height:7px;
 }
 
-input[type=submit]:hover {
-  background-color: #45a049;
-}
-
-/* Two-column layout */
-.col {
-  float: left;
-  width: 100%;
-  margin: auto;
-  padding: 0 50px;
-  margin-top: 6px;
-}
-
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
+input[type='range']::-webkit-slider-thumb {
+  height:10px;
+  width:10px;
 }
 
 
-/* hide some text on medium and large screens */
-.hide-md-lg {
-  display: none;
-}
-
-/* bottom container */
-.bottom-container {
-  text-align: center;
-  background-color: #666;
-  border-radius: 0px 0px 4px 4px;
-}
 
 /* Responsive layout - when the screen is less than 650px wide, make the two columns stack on top of each other instead of next to each other */
 @media screen and (max-width: 650px) {

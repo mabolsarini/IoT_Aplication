@@ -6,55 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="./css/main.css" media="screen" />
     <style>
         html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <h1>Ar Condicionado IoT - Time 1</h1>
-    </div>
+<body onload="iniValues()">
+    <nav class="navbar navbar-dark bg-dark">
+        <h1 class="navbar-brand" href="#">
+          <img src="iot-removebg-preview_preview.png" width="30" height="30" class="d-inline-block align-top" >
+          AR CONDICIONADO IOT - time 1
+        </h1>
+    </nav>
+    
+    
 
     <div class="sensores">
         <h2>Monitoramento dos sensores</h2>
-        <div class="container">
-            <div class="container">
-                Temperatura:
-            </div>
-            <div class="container">
-                Umidade:
-            </div>
-            <div class="container">
-                Luminosidade:
-            </div>
-            <div class="container">
-                Movimento:
-            </div>
+        <div class="containerList">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">Temperatura:</li>
+                <li class="list-group-item">Umidade:</li>
+                <li class="list-group-item">Luminosidade:</li>
+                <li class="list-group-item">Movimento:</li>
+            </ul>
         </div>
     </div>
+
     <div class="configuracao">
-        <h2>Configuracao do Ar Condicionado</h2>
-        <div class="container">
-            <form class="powerButton" action="#" onsubmit="switchPower();return false">
-                <input type="submit" value="Ligar / Desligar"><br>
+        <h2>Configuração do Ar Condicionado</h2> 
+        <div class="containerList">     
+                       
+            <form class="powerButton" action="#" onsubmit="switchPower(); return false">
+                <input id="ioAc" type="submit"  class="btn btn-primary" value="Desligar"><br>
             </form>
+            
+            <div id="cardConfig" class="card cardEdit" style="display: block;">
+                <form id="configForm" action="/config" method="post" onsubmit="submitConfig(); return tMin.value > tMax.value ? false : true">
+                    <label for="tMin">Temperatura mínima (°C)</label><br>
+                    <input type="range" id="tMin" onchange="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
+    
+                    <label for="tMax">Temperatura máxima (°C)</label><br>
+                    <input type="range" id="tMax" onchange="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
+    
+                    <label for="tOp">Temperatura de operação (°C)</label><br>
+                    <input type="range" id="tOp" onchange="changeRangeVal('tOp')" name="tOp" min="16" max="23"><span id="tOpVal"></span><br>
+    
+                    <label for="delay">Delay entre os comandos (minutos)</label><br>
+                    <input type="range" id="delay" onchange="changeRangeVal('delay')" name="delay" min="1" max="120"><span id="delayVal"></span><br>
+    
+                    <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
+                    <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
+                    
+                    <input type="submit" class="btn btn-success" value="Aplicar"><br>
+                   
+                </form>
+            </div>
 
-            <form id="configForm" action="/config" method="post">
-                <label for="tMin">Temperatura mínima (°C)</label><br>
-                <input type="range" id="tMin" name="tMin" min="16" max="22"><br>
-
-                <label for="tMax">Temperatura máxima (°C)</label><br>
-                <input type="range" id="tMax" name="tMax" min="17" max="23"><br>
-
-                <label for="tMax">Delay entre os comandos (minutos)</label><br>
-                <input type="range" id="tMax" name="tMax" min="1" max="120"><br>
-
-                <input type="checkbox" id="onIdle" name="onIdle" value="onIdle">
-                <label for="onIdle">Desligar quando a sala estiver vazia</label><br>
-
-                <input type="submit" value="Aplicar"><br>
-            </form>
+            
+            
         </div>
     </div>
 
