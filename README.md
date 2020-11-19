@@ -1,4 +1,6 @@
-# IoT_Aplication Time 1
+# Projeto Ar Condicionado IoT - Time 1
+
+## Grupo 1: Aplicação
 
 - Ana Clara Amorim Andrade 10691992
 - Lucas Yuji Matubara 10734432
@@ -6,22 +8,50 @@
 - Pedro Pastorello Fernandes 10262502
 - Vinıcius Eduardo de Araujo 11275193
 
-Para rodar o código é necessário instalar o node: https://nodejs.org/en/download/
-Após isso basta rodar o comando 'npm install' e rodar 'node index.js' para subir o servidor e visualizar a página.
+## Sobre
 
-# NodeJS + Express (Servidor)
-https://nodejs.org/
-https://expressjs.com/
-https://developer.mozilla.org/pt-BR/docs/Learn/Server-side/Express_Nodejs/Introdu%C3%A7%C3%A3o
+Esse é o código da aplicação, ou seja, a interface do usuário com o sistema de controle do ar condicionado.
 
-# Lib para MQTT (Interagir com o Broker)
-https://github.com/mqttjs/MQTT.js
+Usamos NodeJS + Express para desenvolver o back-end, que serve a pasta `/public/` e algumas rotas GET e POST para possibilitar a interação do front-end com o servidor.
 
-# Ajax e Socket.io para atualização dinâmica da página
-https://api.jquery.com/jquery.ajax/
-https://socket.io/
+Para rodar o código é necessário instalar o NodeJS.
+Após isso basta rodar o comando `npm install` para instalar as dependências e `node index.js` para subir o servidor.
 
-# Dados
+As configurações de endereço e porta do servidor e da conexão com o broker podem ser feitas na variável `config`, no começo arquivo que define o servidor (`index.js`). No futuro, iremos transformar essa configuração em um arquivo, desacoplado do código.
+
+Se estiver com as configuraçõe padrão, navegue até http://localhost:8080" para visualizar a página.
+
+O que ainda será feito para o checkpoint 3:
+- Funções de interação com o Broker (prioridade)
+- Retirar mocks e integrar a interação com o broker no lugar deles (prioridade)
+- Adicionar um sistema ou proxy de login, provelmente a tela de login da google (prioridade)
+- Servir o site usando https
+- Subir o servidor em alguma máquina ou provedor de Núvem para disponibilizar a aplicação na internet
+
+!! Por favor, leia os comentários feitos no arquivo `index.js` !!
+
+## Tecnologias utilizadas
+
+### Back-end
+
+#### NodeJS + Express (Servidor)
+- https://nodejs.org/
+- https://expressjs.com/
+- https://developer.mozilla.org/pt-BR/docs/Learn/Server-side/Express_Nodejs/Introdu%C3%A7%C3%A3o
+
+#### Biblioteca de MQTT para JavaScript (interação com o Broker)
+- https://github.com/mqttjs/MQTT.js
+
+### Front-end
+
+- HTML
+- CSS
+- JavaScript
+
+#### Ajax para atualização dinâmica da página
+- https://api.jquery.com/jquery.ajax/
+
+# Dados do time
 
 - time_ID: 1
 - Ar condicionado: 23
@@ -32,5 +62,4 @@ https://socket.io/
 
 # Broker:
 - Endpoint: andromeda.lasdpc.icmc.usp.br
-- Port 1821/8021
-
+- Portas: 1821/8021
