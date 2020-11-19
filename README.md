@@ -1,10 +1,10 @@
 # IoT_Aplication Time 1
 
-Ana Clara Amorim Andrade 10691992
-Lucas Yuji Matubara 10734432
-Matheus Godoy Bolsarini 9896201
-Pedro Pastorello Fernandes 10262502
-Vinıcius Eduardo de Araujo 11275193
+- Ana Clara Amorim Andrade 10691992
+- Lucas Yuji Matubara 10734432
+- Matheus Godoy Bolsarini 9896201
+- Pedro Pastorello Fernandes 10262502
+- Vinıcius Eduardo de Araujo 11275193
 
 Para rodar o código é necessário instalar o node: https://nodejs.org/en/download/
 Após isso basta rodar o comando 'npm install' e rodar 'node index.js' para subir o servidor e visualizar a página.
