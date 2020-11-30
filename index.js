@@ -16,6 +16,7 @@ const config = {
     roomId: '2',
     acId: '23'
 }
+
 //=======================================================================
 //
 // MOCKS. Serão removidos para o checkpoint 3
@@ -51,7 +52,7 @@ var sensors = [
 
 //=======================================================================
 //
-// Interação com o Boker MQTT - Será desenvolvida para o checkpoint 3s
+// Interação com o Boker MQTT - Será desenvolvida para o checkpoint 3
 // https://github.com/mqttjs/MQTT.js
 //
 //=======================================================================
@@ -247,6 +248,7 @@ function logState(msg) {
 // Roteamento e definição do servidor
 //
 //=======================================================================
+
 app.route('/state')
     .get((req, res) => {
         res.send(acState);
@@ -257,7 +259,7 @@ app.route('/state')
         if (validStateParams(params)) {
             setAcState(acState, params);
 
-            logState("Novo configuracao de estado recebido");
+            logState("Nova configuracao de estado recebida");
             res.status(200);
         } else {
             logState("Configuracao de estado invalida recebida");
@@ -273,7 +275,7 @@ app.get('/sensors', (req, res) => {
 app.post('/power', (req, res) => {
     acState = switchAcPower(acState);
 
-    logState("Novo configuracao de estado recebido");
+    logState("Nova configuracao de estado recebida");
     res.status(200);
 })
 

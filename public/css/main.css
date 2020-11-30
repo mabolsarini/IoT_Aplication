@@ -4,6 +4,11 @@ body{
 }
 * {box-sizing: border-box}
 
+html {
+  position: relative;
+  min-height: 100%;
+}
+
 /* style the container */
 .containerList {
   position: relative;
@@ -74,6 +79,9 @@ input[type='range']::-webkit-slider-thumb {
   align-content: center;
   background-color: #343a40!important;
   height: 38px;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
 }
 
 .p-footer{

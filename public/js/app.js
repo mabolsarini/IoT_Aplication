@@ -22,9 +22,7 @@ function powerOn() {
 }
 
 function switchPower() {
-    $.post(
-        "/power", {}
-    )
+    $.post("/power", {})
 
     if (isPowered) {
         powerOff();
@@ -52,7 +50,7 @@ function validStateParams(params) {
     return true;
 }
 
-function sendState(){
+function sendState() {
     state = {
         "tMin": tMin.value,
         "tMax": tMax.value,
