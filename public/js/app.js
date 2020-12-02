@@ -103,6 +103,12 @@ function setTempMax(){
 }
 
 function initValues(){
+    initAcState();
+
+    initSensors();
+}
+
+function initAcState() {
     $.get('/state', data => {
         isPowered = data.power;
         if (isPowered) powerOn(); else powerOff();
@@ -121,16 +127,21 @@ function initValues(){
 
         powerOnIdle.checked = data.powerOnIdle;
     })
+}
 
+function initSensors() {
     $.get('/sensors', data => {
-        populateSensorList("temp", data.filter(sensor => sensor.type == "temp"));
-        populateSensorList("umid", data.filter(sensor => sensor.type == "umid"));
-        populateSensorList("luz", data.filter(sensor => sensor.type == "luz"));
-        populateSensorList("movimento", data.filter(sensor => sensor.type == "movimento"));
+        populateSensorList("temp", data.temp);
+        populateSensorList("umid", data.umid);
+        populateSensorList("luz", data.luz);
+        populateSensorList("movimento", data.movimento);
     });
 }
 
+setInterval(initSensors, 1000)
+
 function populateSensorList(listName, sensorList) {
+    document.getElementById(listName+"_List").innerHTML = '';
     sensorList.forEach((sensor, i) => {
         var element = document.createElement("LI");
         var textnode = document.createTextNode(sensor.name+" : ");

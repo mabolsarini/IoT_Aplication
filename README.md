@@ -21,12 +21,16 @@ As configurações de endereço e porta do servidor e da conexão com o broker p
 
 Se estiver com as configuraçõe padrão, navegue até http://localhost:8080" para visualizar a página.
 
-O que ainda será feito para o checkpoint 3:
-- Funções de interação com o Broker (prioridade)
-- Retirar mocks e integrar a interação com o broker no lugar deles (prioridade)
+
+## TODO
+- Publish de configurações do Ar Condicionado para o broker 
+- Resolver bug: após 9 atualizações de estado do ar condicionado, a página trava e para de se comunicar com o back-end
+- Mudar a forma como o front-ent atualiza os dados dos sensores (utilizar eventos, atualmente usa setInterval(), que não é uma boa prática)
+- Passar todas as lógicas possíveis do front-ent para o back-end (performance e segurança)
+- Adicionar mais boas práticas de segurança referentes a Node e Express
 - Adicionar um sistema ou proxy de login, provelmente a tela de login da google (prioridade)
 - Servir o site usando https
-- Subir o servidor em alguma máquina ou provedor de Núvem para disponibilizar a aplicação na internet
+- Dockerizar e configurar deployment para a VM
 
 !! Por favor, leia os comentários feitos no arquivo `index.js` !!
 
