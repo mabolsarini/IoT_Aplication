@@ -3,6 +3,27 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
+const TIMEOUT = 2000
+var statesSent = false;
+var statesReceived = false;
+
+
+
+function promiseWhen(){
+    return new Promise(function(resolve, reject){
+        setTimeout(function(){
+            reject();
+        }, TIMEOUT);
+        function loop(){
+            if(statesSent && statesReceived){
+                return resolve();
+            }
+            setTimeout(loop,0);
+        }
+        setTimeout(loop,0);
+
+    });
+}
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -135,6 +156,7 @@ function publishAcState(newState) {
     // console.log(`new state: ${JSON.stringify(newState)}`);
     // console.log(`payload: ${JSON.stringify(payload)}`);
     console.log(`sent: ${msgStr}`);
+    statesSent = true;
     client.publish(topic, msgStr);
 }
 
@@ -235,6 +257,7 @@ function processAcMsg(message) {
     setAcState(acState, data);
     
     console.log(`received: ${message.toString()}`);
+    statesReceived = true;
     // console.log(acState)
 
     serverLog(`Dados do ar condicionado: ${JSON.stringify(data)}`);
@@ -333,7 +356,19 @@ app.route('/state')
             publishAcState(params);
 
             serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
-            res.status(200);
+            promiseWhen().then(function(){
+                console.log('done');
+                statesSent = false;
+                statesReceived = false;
+                res.status(200);
+                res.send("done");
+            }, function (){
+                statesSent = false;
+                statesReceived = false;
+                console.log('timeout');
+                res.status(500);
+                res.send("timeout");
+            });
         } else {
             serverLog(`Configuracao invalida recebida: ${JSON.stringify(acState)}`);
             res.sendStatus(400);
@@ -348,7 +383,21 @@ app.get('/sensors', (req, res) => {
 app.post('/power', (req, res) => {
     publishAcState({power: !acState.power});
     serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
-    res.status(200);
+
+    promiseWhen().then(function(){
+        res.status(200);
+        console.log('done');
+        statesSent = false;
+        statesReceived = false;
+        res.status(200);
+        res.send("done");
+    }, function (){
+        console.log('timeout');
+        statesSent = false;
+        statesReceived = false;
+        res.status(500);
+        res.send("timeout");
+    });
 })
 
 app.use(function(req, res, next) {

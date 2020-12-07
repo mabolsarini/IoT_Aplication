@@ -5,28 +5,42 @@ const delay = document.getElementById("delay");
 const powerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
 const power = document.getElementById("power");
+const apply = document.getElementById("apply");
 var isPowered;
 
 function powerOff() {
     isPowered = false;
     power.value = "Ligar";
-
+    
     cardConfig.style.display = "none";
 }
 
 function powerOn() {
     isPowered = true;
     power.value = "Desligar";
-
+    
     cardConfig.style.display = "block";
 }
 
+function freeze(freezeBool){
+    power.disabled = freezeBool;
+    apply.disabled = freezeBool;
+    tMin.disabled = freezeBool;
+    tMax.disabled = freezeBool;
+    tOp.disabled = freezeBool;
+    delay.disabled = freezeBool;
+    powerOnIdle.disabled = freezeBool;
+}
 function switchPower() {
+    console.log("freeze");
     $.ajax({
+        beforeSend: freeze(true),
         url: "/power",
         type: "POST", 
-        data: {}
-    })
+        data: {},
+        success: postSuccess,
+        error : postError
+    });
 
     if (isPowered) {
         powerOff();
@@ -54,6 +68,16 @@ function validStateParams(params) {
     return true;
 }
 
+function postSuccess(data,status){
+    freeze(false);
+    window.location.reload();
+}
+function postError(data,status){
+    freeze(false);
+    alert("Erro: O ar condionado está demorando muito para responder :(");
+    window.location.reload();
+}
+
 function sendState() {
     state = {
         "tMin": tMin.value,
@@ -64,11 +88,15 @@ function sendState() {
     };
     
     if (validStateParams(state)) {
+        console.log("freeze");
         $.ajax({
+            beforeSend: freeze(true),
             url: "/state",
             type: "POST", 
-            data: state
-        })
+            data: state,
+            success: postSuccess,
+            error : postError
+        });
     }
 }
 
