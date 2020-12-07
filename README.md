@@ -1,6 +1,6 @@
 # Projeto Ar Condicionado IoT - Time 1
 
-## Grupo 1: Aplicação
+## Grupo 22: Aplicação
 
 - Ana Clara Amorim Andrade 10691992
 - Lucas Yuji Matubara 10734432
