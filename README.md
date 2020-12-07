@@ -23,16 +23,11 @@ Se estiver com as configurações padrão, navegue até http://localhost:8080" p
 
 
 ## TODO
-- Debugar publicação de estado do ar condicionado para o broker 
+- Tela de login
+- Descobrir como gerar o id das mensagens
+- Debugar publicação de estado do ar condicionado para o broker (problema de sincronia no estado do ar condicionado)
 - Resolver bug: após 9 atualizações de estado do ar condicionado, a página trava e para de se comunicar com o back-end
-- Mudar a forma como o front-ent atualiza os dados dos sensores (utilizar eventos, atualmente usa setInterval(), que não é uma boa prática)
-- Passar todas as lógicas possíveis do front-ent para o back-end (performance e segurança)
-- Adicionar mais boas práticas de segurança referentes a Node e Express
-- Adicionar um sistema ou proxy de login, provelmente a tela de login da google (prioridade)
-- Servir o site usando https
-- Dockerizar e configurar deployment para a VM
-
-!! Por favor, leia os comentários feitos no arquivo `index.js` !!
+- Fazer deploy para a VM
 
 ## Tecnologias utilizadas
 
@@ -68,4 +63,4 @@ Se estiver com as configurações padrão, navegue até http://localhost:8080" p
 - Portas: 1821/8021
 
 ## VM
-- vm para conectar: 4
+- vm para conectar: vm4

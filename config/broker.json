@@ -1,0 +1,14 @@
+{
+    "endpoint": "andromeda.lasdpc.icmc.usp.br",
+    "port": 8021,
+    "teamId": "1",
+    "roomId": "2",
+    "acId": "23",
+    "auth": {
+        "user": "broker",
+        "passFile": "secret/broker.pass",
+        "keyFile": "secret/client.key",
+        "certFile": "secret/client.crt",
+        "caFile": "secret/ca.crt"
+    }
+}

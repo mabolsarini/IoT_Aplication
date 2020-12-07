@@ -1,0 +1,10 @@
+{
+    "msgCode": "0",
+    "tMax": "1",
+    "tMin": "2",
+    "delay": "3",
+    "tOp": "4",
+    "power": "21",
+    "powerOnIdle": "22",
+    "msgId": "23"
+}

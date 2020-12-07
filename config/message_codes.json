@@ -1,0 +1,8 @@
+{
+    "tMax": 4,
+    "tMin": 8,
+    "delay": 16,
+    "tOp": 32,
+    "power": 1,
+    "powerOnIdle": 2
+}

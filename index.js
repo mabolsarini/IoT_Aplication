@@ -1,17 +1,33 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
-const http = require('http').createServer(app);
-const mqtt = require('mqtt');
 const fs = require('fs');
+const mqtt = require('mqtt');
 
-// Configuracao do servidor
-const serverConfig = {
-    hostname: '127.0.0.1',
-    port: 8080,
+// Lendo arquivos de configuracao e credenciais
+const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
+const msgCodes = JSON.parse(fs.readFileSync('config/message_codes.json'));
+const sensorsConfig = JSON.parse(fs.readFileSync('config/sensors.json'));
+
+const serverConfig = JSON.parse(fs.readFileSync('config/server.json'));
+const serverCredentials = {
+    key: fs.readFileSync(serverConfig.https.cert.keyFile),
+    cert: fs.readFileSync(serverConfig.https.cert.certFile),
 }
 
-// Estado inicial do menu de configuracao do ar condicionado
+const brokerConfig = JSON.parse(fs.readFileSync('config/broker.json'));
+const brokerCredentials = {
+    pass: fs.readFileSync(brokerConfig.auth.passFile).toString(),
+    key: fs.readFileSync(brokerConfig.auth.keyFile).toString(),
+    cert: fs.readFileSync(brokerConfig.auth.certFile).toString(),
+    ca: fs.readFileSync(brokerConfig.auth.caFile).toString()
+}
+
+// Instanciando servidores http e https
+const http = require('http').createServer(app);
+const https = require('https').createServer(serverCredentials, app);
+
+// Estado inicial do menu de configuracao do ar condicionado (MOCK)
 var acState = {
     tMin: 16,
     tMax: 18,
@@ -21,7 +37,7 @@ var acState = {
     powerOnIdle: true
 }
 
-// Dados dos sensores
+// Inicializando sensores
 var sensors = {
     temp: [],
     umid: [],
@@ -36,57 +52,20 @@ var sensors = {
 //
 //=======================================================================
 
-const brokerConfig = {
-    endpoint: 'andromeda.lasdpc.icmc.usp.br',
-    port: 8021,
-    user: 'broker',
-    pass: fs.readFileSync('./secret/broker.pass').toString(),
-    teamId: '1',
-    roomId: '2',
-    acId: '23',
-    auth: {
-        key: fs.readFileSync('./secret/client.key'),
-        cert: fs.readFileSync('./secret/client.crt'),
-        caFile: fs.readFileSync('./secret/ca.crt')
-    }
-}
-
-var options = {
+// Conectando com broker
+var clientConfig = {
     host: brokerConfig.endpoint,
     port: brokerConfig.port,
-    protocol: 'mqtts',
-    secureProtocol: 'TLSv1_method',
-    protocolId: 'MQIsdp',
-    rejectUnauthorized: true,
-    username: brokerConfig.user,
-    password: brokerConfig.pass,
-    ca: [brokerConfig.auth.caFile],
-    key: brokerConfig.auth.key,
-    cert: brokerConfig.auth.cert,
-    protocolId: 'MQIsdp',
+    protocol: "mqtts",
+    secureProtocol: "TLSv1_method",
+    protocolId: "MQIsdp",
     protocolVersion: 3,
-    debug: true
-}; var client = mqtt.connect(options);
-
-var msgFields = {
-    msgCode: "0",
-    tMax: "1",
-    tMin: "2",
-    delay: "3",
-    tOp: "4",
-    power: "21",
-    powerOnIdle: "22",
-    msgId: "23"
-}
-
-var msgCodes = {
-    tMax: 4,
-    tMin: 8,
-    delay: 16,
-    tOp: 32,
-    power: 1,
-    powerOnIdle: 2
-}
+    username: brokerConfig.auth.user,
+    password: brokerCredentials.pass,
+    ca: [brokerCredentials.ca],
+    key: brokerCredentials.key,
+    cert: brokerCredentials.cert
+}; var client = mqtt.connect(clientConfig);
 
 //==========
 // Publish
@@ -118,6 +97,7 @@ function generateMsgPayload(newState) {
             payload[key] = newState[key];
         }
     })
+
     payload['msgCode'] = getMsgCode(payload);
     payload['msgId'] = newMsgId();
 
@@ -149,19 +129,18 @@ function publishAcState(newState) {
     var payload = generateMsgPayload(newState)
     var msgStr = serializePayload(payload);
     
-
     // debug
     // console.log('')
     // console.log(`old state: ${JSON.stringify(acState)}`);    
     // console.log(`new state: ${JSON.stringify(newState)}`);
     // console.log(`payload: ${JSON.stringify(payload)}`);
-    // console.log(`message: ${msgStr}`);
+    console.log(`sent: ${msgStr}`);
     client.publish(topic, msgStr);
 }
 
-//==========
+//===========
 // Subscribe
-//==========
+//===========
 
 function subscribeToTopic(client, topic) {
     client.subscribe(topic, function (err) {
@@ -180,14 +159,9 @@ function subscribeToSensor(client, sensorType, sensorId) {
 
 // Hard coded - mudar
 client.on('connect', function () {
-    subscribeToSensor(client, 'temp', 20);
-    subscribeToSensor(client, 'temp', 21);
-    subscribeToSensor(client, 'temp', 22);
-    subscribeToSensor(client, 'umid', 20);
-    subscribeToSensor(client, 'umid', 21);
-    subscribeToSensor(client, 'umid', 22);
-    subscribeToSensor(client, 'movimento', 25);
-    subscribeToSensor(client, 'luz', 26);
+    sensorsConfig.forEach(sensor => {
+        subscribeToSensor(client, sensor.type, sensor.id);
+    })
     subscribeToTopic(client, `${brokerConfig.teamId}/response`);
 })
 
@@ -225,7 +199,9 @@ function processSensorMsg(topic, message) {
         sensors[sensorType][index] = data;
     }
     
-    // serverLog(`Dados de sensor: ${JSON.stringify(data)}`);
+    if (serverConfig.logSensorData) {
+        serverLog(`Dados de sensor: ${JSON.stringify(data)}`);
+    }
 }
 
 // Parsear mensagens dos topicos dos sensores
@@ -258,7 +234,7 @@ function processAcMsg(message) {
     
     setAcState(acState, data);
     
-    console.log(message.toString());
+    console.log(`received: ${message.toString()}`);
     // console.log(acState)
 
     serverLog(`Dados do ar condicionado: ${JSON.stringify(data)}`);
@@ -379,6 +355,14 @@ app.use(function(req, res, next) {
     res.status(404).send('Página não foi encontrada.');
 });
 
-http.listen(serverConfig.port, () => {
-  serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.port}`);
-})
+if (serverConfig.http.enabled) {
+    http.listen(serverConfig.http.port, () => {
+    serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.http.port}`);
+    })
+}
+
+if (serverConfig.https.enabled) {
+    https.listen(serverConfig.https.port, () => {
+        serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.https.port}`);
+    })
+}

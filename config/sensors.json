@@ -1,0 +1,10 @@
+[
+    {"type": "temp", "id": 20},
+    {"type": "temp", "id": 21},
+    {"type": "temp", "id": 22},
+    {"type": "umid", "id": 20},
+    {"type": "umid", "id": 21},
+    {"type": "umid", "id": 22},
+    {"type": "movimento", "id": 25},
+    {"type": "luz", "id": 26}
+]
