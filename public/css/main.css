@@ -113,11 +113,34 @@ input[type='range']::-webkit-slider-thumb {
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive layout - when the screen is less than 650px wide, make the two columns stack on top of each other instead of next to each other */
+
+
+/* Responsive layout */
+
+@media screen and (max-width: 1000px) {
+  .containerListImg{
+    flex-direction: column;
+  }
+
+  .imagem-mapa{
+    width: 50%;
+  }
+}
+
+@media screen and (max-width: 800px) {
+  .imagem-mapa{
+    width: 80%;
+  }
+}
+/* when the screen is less than 650px wide, make the two columns stack on top of each other instead of next to each other */
 @media screen and (max-width: 650px) {
   .cardEdit{
     margin: 20px 0;
     width: 10 0%;
     padding: 1%;
   }
+
+  
+
+  
 }
