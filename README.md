@@ -1,6 +1,6 @@
 # Projeto Ar Condicionado IoT - Time 1
 
-## Grupo 1: Aplicação
+## Grupo 22: Aplicação
 
 - Ana Clara Amorim Andrade 10691992
 - Lucas Yuji Matubara 10734432
@@ -63,6 +63,7 @@ Se estiver com as configurações padrão, navegue até http://localhost:8080" p
 - Portas: 1821/8021
 
 ## VM
+<<<<<<< HEAD
 login: ssc952-t1
 senha: iot#$20t1
 porta: 2321
@@ -73,3 +74,6 @@ ssh <login>@andromeda.lasdpc.icmc.usp.br -p 2321
 após logar: ssh tau02-vm4
 
 vm1 -> vm4
+=======
+- vm para conectar: vm4
+>>>>>>> de105cc4c8c9ed7dc02572a5c23c82ba1d227b71
