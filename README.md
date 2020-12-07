@@ -63,4 +63,13 @@ Se estiver com as configurações padrão, navegue até http://localhost:8080" p
 - Portas: 1821/8021
 
 ## VM
-- vm para conectar: vm4
+login: ssc952-t1
+senha: iot#$20t1
+porta: 2321
+
+
+ssh <login>@andromeda.lasdpc.icmc.usp.br -p 2321
+
+após logar: ssh tau02-vm4
+
+vm1 -> vm4

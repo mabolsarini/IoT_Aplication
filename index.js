@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
+const uniqid = require('uniqid');
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -71,12 +72,6 @@ var clientConfig = {
 // Publish
 //==========
 
-// Função que irá gerar o ID da mensagem para envia-la ao broker
-// Não ficou claro qual é a heurística para fazer isso, então a função ainda não foi implementada
-function newMsgId() {
-    return 12345;
-}
-
 function getMsgCode(msgPayload) {    
     var sum = 0;
     Object.keys(msgPayload).forEach( key => {
@@ -99,7 +94,7 @@ function generateMsgPayload(newState) {
     })
 
     payload['msgCode'] = getMsgCode(payload);
-    payload['msgId'] = newMsgId();
+    payload['msgId'] = uniqid();
 
     return payload;
 }
