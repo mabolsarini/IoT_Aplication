@@ -22,7 +22,11 @@ function powerOn() {
 }
 
 function switchPower() {
-    $.post("/power", {})
+    $.ajax({
+        url: "/power",
+        type: "POST", 
+        data: {}
+    })
 
     if (isPowered) {
         powerOff();
@@ -60,9 +64,11 @@ function sendState() {
     };
     
     if (validStateParams(state)) {
-        $.post(
-            "/state", state
-        );
+        $.ajax({
+            url: "/state",
+            type: "POST", 
+            data: state
+        })
     }
 }
 
@@ -104,7 +110,6 @@ function setTempMax(){
 
 function initValues(){
     initAcState();
-
     initSensors();
 }
 
@@ -138,7 +143,7 @@ function initSensors() {
     });
 }
 
-setInterval(initSensors, 1000)
+setInterval(initSensors, 1000);
 
 function populateSensorList(listName, sensorList) {
     document.getElementById(listName+"_List").innerHTML = '';

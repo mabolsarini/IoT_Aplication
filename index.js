@@ -13,12 +13,12 @@ const serverConfig = {
 
 // Estado inicial do menu de configuracao do ar condicionado
 var acState = {
-    power: true,
-    powerOnIdle: true,
     tMin: 16,
     tMax: 18,
-    tOp: 17,
     delay: 10,
+    tOp: 17,
+    power: false,
+    powerOnIdle: true
 }
 
 // Dados dos sensores
@@ -35,7 +35,6 @@ var sensors = {
 // https://github.com/mqttjs/MQTT.js
 //
 //=======================================================================
-
 
 const brokerConfig = {
     endpoint: 'andromeda.lasdpc.icmc.usp.br',
@@ -67,84 +66,104 @@ var options = {
     protocolId: 'MQIsdp',
     protocolVersion: 3,
     debug: true
-}; var client  = mqtt.connect(options);
+}; var client = mqtt.connect(options);
+
+var msgFields = {
+    msgCode: "0",
+    tMax: "1",
+    tMin: "2",
+    delay: "3",
+    tOp: "4",
+    power: "21",
+    powerOnIdle: "22",
+    msgId: "23"
+}
+
+var msgCodes = {
+    tMax: 4,
+    tMin: 8,
+    delay: 16,
+    tOp: 32,
+    power: 1,
+    powerOnIdle: 2
+}
 
 //==========
 // Publish
 //==========
 
-// // Função que irá gerar o ID da mensagem para envia-la ao broker
-// // Não ficou claro qual é a heurística para fazer isso, então a função ainda não foi implementada
-// function generateMessageId() {
-//     return 12345;
-// }
+// Função que irá gerar o ID da mensagem para envia-la ao broker
+// Não ficou claro qual é a heurística para fazer isso, então a função ainda não foi implementada
+function newMsgId() {
+    return 12345;
+}
 
-// // Função que retorna um objeto de estado apenas com os campos diferentes entre dois estados
-// // Usada por getMsgCode()
-// function stateDiff(stateA, stateB) {
-//     // Implementar
-// }
+function getMsgCode(msgPayload) {    
+    var sum = 0;
+    Object.keys(msgPayload).forEach( key => {
+        sum += msgCodes[key];
+    })
 
-// // Função para gerar o código para identificação de campos contidos numa mensagem a ser enviada
-// // Toda vez que o usuário aplicar uma nova configuração pelo site, recebemos um objeto de estado inteiro do front-end.
-// // Portanto, precisamos fazer um diff entre o estado pedido pelo usuário e o estado atual do ar condicionado
-// // Para isso, precisaremos pegar última mensagem de estado vinda do ar condicionado e compará-la com o estado recebido do front-end
-// // Isso depende da troca de mensagens ter sido implementada.
-// function getMsgCode(newState, lastState) {
-//     // Comparar o estado atual do ar-condicionado com o estado solicitado pelo usuário
-//     // lastState é última mensagem de estado recebida
-//     var diff = stateDiff(newState, lastState);
+    return sum;
+}
+
+// Funcao que gera o conteudo da mensagem de configuracao do ar condicionado a ser enviada
+// Ela compara o novo estado solicitado pelo usuario com o estado atual e retorna
+// apenas os campos que foram diferentes
+function generateMsgPayload(newState) {
+    var payload = {};
+
+    Object.keys(newState).forEach( key => {
+        if (newState[key] !== acState[key]) {
+            payload[key] = newState[key];
+        }
+    })
+    payload['msgCode'] = getMsgCode(payload);
+    payload['msgId'] = newMsgId();
+
+    return payload;
+}
+
+function serializePayload(payload) {
+    msg = {};
+    Object.keys(payload).forEach( key => {
+        switch(key) {
+            case "power":
+                msg[msgFields[key]] = payload[key] ? 1 : 0;
+                break;
+            case "powerOnIdle":
+                msg[msgFields[key]] = payload[key] ? 1 : 0;
+                break;
+            default:
+                msg[msgFields[key]] = payload[key];
+                break;
+        }
+    })
+    return JSON.stringify(msg);
+}
+
+function publishAcState(newState) {
+    var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
+
+    // Retorna apenas os campos que forem diferentes
+    var payload = generateMsgPayload(newState)
+    var msgStr = serializePayload(payload);
     
-//     var msgCodes = {
-//         tMax: 4,
-//         tMin: 8,
-//         delay: 26,
-//         tOp: 32,
-//         power: 1,
-//         powerOnIdle: 2
-//     }
 
-//     // Somar os valores
-    
-//     return 0;
-// }
-
-// // Função para gerar o conteúdo em JSON de uma mensagem que representa uma solicitação de mudança de estado
-// function serializeStateData(state) {
-//     return JSON.stringify({
-//         "0": getMsgCode(state),
-//         "1": state.tMax,
-//         "2": state.tMIn,
-//         "3": state.delay,
-//         "4": state.tOp,
-//         "21": state.power ? 1 : 0,
-//         "22": state.powerOnIdle ? 1 : 0,
-//         "23": generateMessageId()
-//     });
-// }
-
-// function parseStateResponseData(stringData) {
-//     data = JSON.parse(stringData);
-
-//     return {
-//         tMax: data['1'],
-//         tMin: data['2'],
-//         delay: data['3'],
-//         tOp: data['4'],
-//         power: (data['21'] === 1),
-//         powerOnIdle: (data['22'] === 1),
-//         msgId: data['23'],
-//         lastUpdate: parseTimestamp(data['s']),
-//     }
-// }
+    // debug
+    // console.log('')
+    // console.log(`old state: ${JSON.stringify(acState)}`);    
+    // console.log(`new state: ${JSON.stringify(newState)}`);
+    // console.log(`payload: ${JSON.stringify(payload)}`);
+    // console.log(`message: ${msgStr}`);
+    client.publish(topic, msgStr);
+}
 
 //==========
-// Subscribe / sensores
+// Subscribe
 //==========
 
-function subscribeToSensor(client, sensorType, sensorId) {
-    var topic = brokerConfig.roomId+"/"+sensorType+"/"+sensorId.toString();
-    
+function subscribeToTopic(client, topic) {
     client.subscribe(topic, function (err) {
         if (!err) {
           console.log('Inscrito no topico '+topic)
@@ -154,32 +173,32 @@ function subscribeToSensor(client, sensorType, sensorId) {
     })
 }
 
+function subscribeToSensor(client, sensorType, sensorId) {
+    var topic = `${brokerConfig.roomId}/${sensorType}/${sensorId.toString()}`;
+    subscribeToTopic(client, topic);
+}
+
+// Hard coded - mudar
 client.on('connect', function () {
-    subscribeToSensor(client, "temp", 20);
-    subscribeToSensor(client, "temp", 21);
-    subscribeToSensor(client, "temp", 22);
-    subscribeToSensor(client, "umid", 20);
-    subscribeToSensor(client, "umid", 21);
-    subscribeToSensor(client, "umid", 22);
-    subscribeToSensor(client, "movimento", 25);
-    subscribeToSensor(client, "luz", 26);
+    subscribeToSensor(client, 'temp', 20);
+    subscribeToSensor(client, 'temp', 21);
+    subscribeToSensor(client, 'temp', 22);
+    subscribeToSensor(client, 'umid', 20);
+    subscribeToSensor(client, 'umid', 21);
+    subscribeToSensor(client, 'umid', 22);
+    subscribeToSensor(client, 'movimento', 25);
+    subscribeToSensor(client, 'luz', 26);
+    subscribeToTopic(client, `${brokerConfig.teamId}/response`);
 })
 
 client.on('message', function (topic, message) {
-    var rawData = message.toString();
-    var sensorType = topic.split('/')[1];
-    var sensorId = topic.split('/')[2];
+    var msgType = topic.split('/')[1];
 
-    data = parseSensorData(sensorType, rawData);
-
-    var index = sensors[sensorType].findIndex(s => s.name === data.name);
-    if (index === -1) {
-        sensors[sensorType].push(data);
+    if (msgType === 'response') {
+        processAcMsg(message);
     } else {
-        sensors[sensorType][index] = data;
+        processSensorMsg(topic, message);
     }
-    
-    console.log(JSON.stringify(data));
 })
 
 client.on('error', function(err){
@@ -192,6 +211,22 @@ client.on('error', function(err){
 // Funções auxiliares para o servidor
 //
 //=======================================================================
+
+function processSensorMsg(topic, message) {
+    var rawData = message.toString();
+    var sensorType = topic.split('/')[1];
+
+    data = parseSensorData(sensorType, rawData);
+
+    var index = sensors[sensorType].findIndex(s => s.name === data.name);
+    if (index === -1) {
+        sensors[sensorType].push(data);
+    } else {
+        sensors[sensorType][index] = data;
+    }
+    
+    // serverLog(`Dados de sensor: ${JSON.stringify(data)}`);
+}
 
 // Parsear mensagens dos topicos dos sensores
 function parseSensorData(type, stringData) {
@@ -212,16 +247,41 @@ function parseSensorData(type, stringData) {
     return {
         name: data['0'],
         type: type,
-        value: v,
-        time: parseTimestamp(data['s'])
+        value: v
+
     };
 }
 
-// Funções para trabalhar com as timestamps no formato definido
-function parseTimestamp(tsString) {
-    var pattern = /(\d{2})\/(\d{2})\/(\d{4})\ (\d{2}):(\d{2}):(\d{2})/
-    return new Date(tsString.replace(pattern,'$3-$2-$1T$4:$5:$6'));
+function processAcMsg(message) {
+    var rawData = message.toString();
+    var data = parseAcData(rawData);
+    
+    setAcState(acState, data);
+    
+    console.log(message.toString());
+    // console.log(acState)
+
+    serverLog(`Dados do ar condicionado: ${JSON.stringify(data)}`);
 }
+
+function parseAcData(stringData) {
+    data = JSON.parse(stringData);
+
+    return {
+        tMax: data[msgFields['tMax']],
+        tMin: data[msgFields['tMin']],
+        delay: data[msgFields['delay']],
+        tOp: data[msgFields['tOp']],
+        power: (data[msgFields['power']] === 1),
+        powerOnIdle: (data[msgFields['powerOnIdle']] === 1),
+        msgId: data[msgFields['msgId']]
+    }
+}
+
+// function parseTimestamp(tsString) {
+//     var pattern = /(\d{2})\/(\d{2})\/(\d{4})\ (\d{2}):(\d{2}):(\d{2})/
+//     return new Date(tsString.replace(pattern,'$3-$2-$1T$4:$5:$6'));
+// }
 
 function generateTimestamp() {
     var now = new Date(); 
@@ -271,14 +331,9 @@ function setAcState(state, params) {
     return state;
 }
 
-function switchAcPower(state) {
-    state.power = !state.power;
-    return state;
-}
-
-// Log de uma alteração de estado com uma mensagem e timestamp
-function logState(msg) {
-    console.log(generateTimestamp()+" "+msg+": "+JSON.stringify(acState));
+// Log com timestamp
+function serverLog(msg) {
+    console.log(`${generateTimestamp()} ${msg}`);
 }
 
 //=======================================================================
@@ -299,12 +354,12 @@ app.route('/state')
         params = castStateParams(req.body);
 
         if (validStateParams(params)) {
-            setAcState(acState, params);
+            publishAcState(params);
 
-            logState("Nova configuracao de estado recebida");
+            serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
             res.status(200);
         } else {
-            logState("Configuracao de estado invalida recebida");
+            serverLog(`Configuracao invalida recebida: ${JSON.stringify(acState)}`);
             res.sendStatus(400);
         }
     })
@@ -315,9 +370,8 @@ app.get('/sensors', (req, res) => {
 })
     
 app.post('/power', (req, res) => {
-    acState = switchAcPower(acState);
-
-    logState("Nova configuracao de estado recebida");
+    publishAcState({power: !acState.power});
+    serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
     res.status(200);
 })
 
@@ -326,5 +380,5 @@ app.use(function(req, res, next) {
 });
 
 http.listen(serverConfig.port, () => {
-  console.log(`Servidor da aplicacao rodando em http://localhost:${serverConfig.port}`)
+  serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.port}`);
 })

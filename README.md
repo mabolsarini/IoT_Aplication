@@ -19,11 +19,11 @@ Após isso basta rodar o comando `npm install` para instalar as dependências e 
 
 As configurações de endereço e porta do servidor e da conexão com o broker podem ser feitas na variável `config`, no começo arquivo que define o servidor (`index.js`). No futuro, iremos transformar essa configuração em um arquivo, desacoplado do código.
 
-Se estiver com as configuraçõe padrão, navegue até http://localhost:8080" para visualizar a página.
+Se estiver com as configurações padrão, navegue até http://localhost:8080" para visualizar a página.
 
 
 ## TODO
-- Publish de configurações do Ar Condicionado para o broker 
+- Debugar publicação de estado do ar condicionado para o broker 
 - Resolver bug: após 9 atualizações de estado do ar condicionado, a página trava e para de se comunicar com o back-end
 - Mudar a forma como o front-ent atualiza os dados dos sensores (utilizar eventos, atualmente usa setInterval(), que não é uma boa prática)
 - Passar todas as lógicas possíveis do front-ent para o back-end (performance e segurança)
@@ -56,7 +56,6 @@ Se estiver com as configuraçõe padrão, navegue até http://localhost:8080" pa
 - https://api.jquery.com/jquery.ajax/
 
 # Dados do time
-
 - time_ID: 1
 - Ar condicionado: 23
 - Sensores de temperatura: 20, 21, 22
@@ -64,6 +63,9 @@ Se estiver com as configuraçõe padrão, navegue até http://localhost:8080" pa
 - Sensor de luminosidade: 26
 - Sensor de movimento: 25
 
-# Broker:
+## Broker:
 - Endpoint: andromeda.lasdpc.icmc.usp.br
 - Portas: 1821/8021
+
+## VM
+- vm para conectar: 4
