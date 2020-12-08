@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
-const TIMEOUT = 2000
+const TIMEOUT = 100
 var statesSent = false;
 var statesReceived = false;
 
@@ -350,6 +350,8 @@ app.route('/state')
         res.send(acState);
     })
     .post( (req, res) => {        
+        statesSent = false;
+        statesReceived = false;
         params = castStateParams(req.body);
 
         if (validStateParams(params)) {
@@ -381,9 +383,10 @@ app.get('/sensors', (req, res) => {
 })
     
 app.post('/power', (req, res) => {
+    statesSent = false;
+    statesReceived = false;
     publishAcState({power: !acState.power});
     serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
-
     promiseWhen().then(function(){
         res.status(200);
         console.log('done');
