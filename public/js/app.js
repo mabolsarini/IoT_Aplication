@@ -5,28 +5,42 @@ const delay = document.getElementById("delay");
 const powerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
 const power = document.getElementById("power");
+const apply = document.getElementById("apply");
 var isPowered;
 
 function powerOff() {
     isPowered = false;
     power.value = "Ligar";
-
+    
     cardConfig.style.display = "none";
 }
 
 function powerOn() {
     isPowered = true;
     power.value = "Desligar";
-
+    
     cardConfig.style.display = "block";
 }
 
+function freeze(freezeBool) {
+    power.disabled = freezeBool;
+    apply.disabled = freezeBool;
+    tMin.disabled = freezeBool;
+    tMax.disabled = freezeBool;
+    tOp.disabled = freezeBool;
+    delay.disabled = freezeBool;
+    powerOnIdle.disabled = freezeBool;
+}
 function switchPower() {
+    console.log("freeze");
     $.ajax({
+        beforeSend: freeze(true),
         url: "/power",
         type: "POST", 
-        data: {}
-    })
+        data: {},
+        success: postSuccess,
+        error : postError
+    });
 
     if (isPowered) {
         powerOff();
@@ -54,6 +68,16 @@ function validStateParams(params) {
     return true;
 }
 
+function postSuccess(data,status) {
+    freeze(false);
+    window.location.reload();
+}
+function postError(data,status) {
+    freeze(false);
+    alert("O ar condionado está demorando muito para responder :(");
+    window.location.reload();
+}
+
 function sendState() {
     state = {
         "tMin": tMin.value,
@@ -64,15 +88,19 @@ function sendState() {
     };
     
     if (validStateParams(state)) {
+        console.log("freeze");
         $.ajax({
+            beforeSend: freeze(true),
             url: "/state",
             type: "POST", 
-            data: state
-        })
+            data: state,
+            success: postSuccess,
+            error : postError
+        });
     }
 }
 
-function changeRangeVal(id){
+function changeRangeVal(id) {
     const curr = document.getElementById(id);
     const currVal = document.getElementById(id+"Val");
     currVal.innerHTML = curr.value;
@@ -80,7 +108,7 @@ function changeRangeVal(id){
     else if(id=="tMax") setTempMax();
 }
 
-function setTempMin(){
+function setTempMin() {
     const currVal = document.getElementById("tOpVal");
     
     if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
@@ -94,7 +122,7 @@ function setTempMin(){
     tOp.min = tMin.value;
 }
 
-function setTempMax(){
+function setTempMax() {
     const currVal = document.getElementById("tOpVal");
 
     if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
@@ -108,7 +136,7 @@ function setTempMax(){
     tOp.max = tMax.value;
 }
 
-function initValues(){
+function initValues() {
     initAcState();
     initSensors();
 }
