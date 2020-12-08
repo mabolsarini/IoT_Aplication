@@ -113,8 +113,6 @@ input[type='range']::-webkit-slider-thumb {
   100% { transform: rotate(360deg); }
 }
 
-
-
 /* Responsive layout */
 
 @media screen and (max-width: 1000px) {
@@ -139,8 +137,4 @@ input[type='range']::-webkit-slider-thumb {
     width: 10 0%;
     padding: 1%;
   }
-
-  
-
-  
 }
