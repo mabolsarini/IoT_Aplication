@@ -21,6 +21,8 @@
     "express": "^4.17.1",
     "googleapis": "^65.0.0",
     "mqtt": "^4.2.6",
-    "socket.io": "^3.0.1"
+    "socket.io": "^3.0.1",
+    "uniqid": "^5.2.0",
+    "uuid": "^8.3.1"
   }
 }

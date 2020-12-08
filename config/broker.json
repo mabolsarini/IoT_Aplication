@@ -4,6 +4,7 @@
     "teamId": "1",
     "roomId": "2",
     "acId": "23",
+    "publishTimeoutMs": 2000,
     "auth": {
         "user": "broker",
         "passFile": "secret/broker.pass",

@@ -70,13 +70,13 @@ function validStateParams(params) {
     return true;
 }
 
-function postSuccess(data,status){
+function postSuccess(data,status) {
     freeze(false);
     window.location.reload();
 }
-function postError(data,status){
+function postError(data,status) {
     freeze(false);
-    alert("Erro: O ar condionado está demorando muito para responder :(");
+    alert("O ar condionado está demorando muito para responder :(");
     window.location.reload();
 }
 
@@ -102,7 +102,7 @@ function sendState() {
     }
 }
 
-function changeRangeVal(id){
+function changeRangeVal(id) {
     const curr = document.getElementById(id);
     const currVal = document.getElementById(id+"Val");
     currVal.innerHTML = curr.value;
@@ -110,7 +110,7 @@ function changeRangeVal(id){
     else if(id=="tMax") setTempMax();
 }
 
-function setTempMin(){
+function setTempMin() {
     const currVal = document.getElementById("tOpVal");
     
     if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
@@ -124,7 +124,7 @@ function setTempMin(){
     tOp.min = tMin.value;
 }
 
-function setTempMax(){
+function setTempMax() {
     const currVal = document.getElementById("tOpVal");
 
     if (currVal.innerHTML==='<span style="color: red;">Invalido</span>' && tMin.value <= tMax.value){
@@ -138,7 +138,7 @@ function setTempMax(){
     tOp.max = tMax.value;
 }
 
-function initValues(){
+function initValues() {
     initAcState();
     initSensors();
 }

@@ -3,27 +3,6 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
-const TIMEOUT = 100
-var statesSent = false;
-var statesReceived = false;
-
-
-
-function promiseWhen(){
-    return new Promise(function(resolve, reject){
-        setTimeout(function(){
-            reject();
-        }, TIMEOUT);
-        function loop(){
-            if(statesSent && statesReceived){
-                return resolve();
-            }
-            setTimeout(loop,0);
-        }
-        setTimeout(loop,0);
-
-    });
-}
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -92,12 +71,42 @@ var clientConfig = {
 // Publish
 //==========
 
-// Função que irá gerar o ID da mensagem para envia-la ao broker
-// Não ficou claro qual é a heurística para fazer isso, então a função ainda não foi implementada
-function newMsgId() {
-    return 12345;
+// Semaforo para a publicacao de estados (travar o servidor até que Broker responda)
+var publishSignal = false;
+var receiveSignal = false;
+var currentMsgId = -1;
+function serverLock(){
+    return new Promise( (resolve, reject) => {
+        setTimeout( () => {
+            reject();
+        }, brokerConfig.publishTimeoutMs);
+        function lock() {
+            if(publishSignal && receiveSignal) {
+                return resolve();
+            }
+            setTimeout(lock, 0);
+        }
+        setTimeout(lock, 0);
+    });
 }
 
+function acquirePublishLock(msgId) {
+    publishSignal = true;
+    currentMsgId = msgId;
+}
+
+function releasePublishLock() {
+    publishSignal = false;
+    receiveSignal = false;
+    currentMsgId = -1;
+}
+
+function generateMessageID() {
+    var now = new Date();
+    return Number(`${now.getDay()}${now.getHours()}${now.getMinutes()}${now.getSeconds()}${now.getMilliseconds()}`);
+}
+
+// Computa o codigo da mensagem a ser enviada
 function getMsgCode(msgPayload) {    
     var sum = 0;
     Object.keys(msgPayload).forEach( key => {
@@ -120,7 +129,7 @@ function generateMsgPayload(newState) {
     })
 
     payload['msgCode'] = getMsgCode(payload);
-    payload['msgId'] = newMsgId();
+    payload['msgId'] = generateMessageID();
 
     return payload;
 }
@@ -147,16 +156,13 @@ function publishAcState(newState) {
     var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
 
     // Retorna apenas os campos que forem diferentes
-    var payload = generateMsgPayload(newState)
+    var payload = generateMsgPayload(newState);
     var msgStr = serializePayload(payload);
     
-    // debug
-    // console.log('')
-    // console.log(`old state: ${JSON.stringify(acState)}`);    
-    // console.log(`new state: ${JSON.stringify(newState)}`);
-    // console.log(`payload: ${JSON.stringify(payload)}`);
     console.log(`sent: ${msgStr}`);
-    statesSent = true;
+    
+    acquirePublishLock(payload.msgId);
+
     client.publish(topic, msgStr);
 }
 
@@ -179,7 +185,6 @@ function subscribeToSensor(client, sensorType, sensorId) {
     subscribeToTopic(client, topic);
 }
 
-// Hard coded - mudar
 client.on('connect', function () {
     sensorsConfig.forEach(sensor => {
         subscribeToSensor(client, sensor.type, sensor.id);
@@ -246,7 +251,6 @@ function parseSensorData(type, stringData) {
         name: data['0'],
         type: type,
         value: v
-
     };
 }
 
@@ -254,13 +258,13 @@ function processAcMsg(message) {
     var rawData = message.toString();
     var data = parseAcData(rawData);
     
-    setAcState(acState, data);
-    
-    console.log(`received: ${message.toString()}`);
-    statesReceived = true;
-    // console.log(acState)
+    if (data.msgId === currentMsgId) {
+        setAcState(acState, data);
+        receiveSignal = true;
+        serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
 
-    serverLog(`Dados do ar condicionado: ${JSON.stringify(data)}`);
+        console.log(`received: ${message.toString()}`);
+    }
 }
 
 function parseAcData(stringData) {
@@ -355,24 +359,20 @@ app.route('/state')
         params = castStateParams(req.body);
 
         if (validStateParams(params)) {
+            serverLog(`Nova configuracao recebida: ${JSON.stringify(params)}`);
+
             publishAcState(params);
 
-            serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
-            promiseWhen().then(function(){
-                console.log('done');
-                statesSent = false;
-                statesReceived = false;
-                res.status(200);
-                res.send("done");
-            }, function (){
-                statesSent = false;
-                statesReceived = false;
-                console.log('timeout');
-                res.status(500);
-                res.send("timeout");
+            serverLock().then( () => {
+                releasePublishLock();
+                res.sendStatus(200);
+            }, () => {
+                console.log('Timeout na comunicacao com o Broker');
+                releasePublishLock();
+                res.sendStatus(500);
             });
         } else {
-            serverLog(`Configuracao invalida recebida: ${JSON.stringify(acState)}`);
+            serverLog(`Configuracao invalida recebida: ${JSON.stringify(param)}`);
             res.sendStatus(400);
         }
     })
@@ -383,23 +383,17 @@ app.get('/sensors', (req, res) => {
 })
     
 app.post('/power', (req, res) => {
-    statesSent = false;
-    statesReceived = false;
-    publishAcState({power: !acState.power});
-    serverLog(`Nova configuracao recebida: ${JSON.stringify(acState)}`);
-    promiseWhen().then(function(){
-        res.status(200);
-        console.log('done');
-        statesSent = false;
-        statesReceived = false;
-        res.status(200);
-        res.send("done");
-    }, function (){
-        console.log('timeout');
-        statesSent = false;
-        statesReceived = false;
-        res.status(500);
-        res.send("timeout");
+    var params = {power: !acState.power};
+    publishAcState(params);
+    serverLog(`Nova configuracao recebida: ${JSON.stringify(params)}`);
+
+    serverLock().then( () => {
+        releasePublishLock();
+        res.sendStatus(200);
+    }, () => {
+        console.log('Timeout na comunicacao com o Broker');
+        releasePublishLock();
+        res.sendStatus(500);
     });
 })
 
