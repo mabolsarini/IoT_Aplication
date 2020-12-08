@@ -6,6 +6,7 @@ const powerOnIdle = document.getElementById("powerOnIdle");
 const cardConfig = document.getElementById("cardConfig");
 const power = document.getElementById("power");
 const apply = document.getElementById("apply");
+const loadSymbol = document.getElementById("loadSymbol");
 var isPowered;
 
 function powerOff() {
@@ -22,7 +23,8 @@ function powerOn() {
     cardConfig.style.display = "block";
 }
 
-function freeze(freezeBool) {
+function freeze(freezeBool){
+    loadSymbol.style.display = freezeBool ? "block" : "none";
     power.disabled = freezeBool;
     apply.disabled = freezeBool;
     tMin.disabled = freezeBool;
