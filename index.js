@@ -3,6 +3,8 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
+const { google } = require('googleapis');
+var path = require('path');
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -345,9 +347,79 @@ function serverLog(msg) {
 //
 //=======================================================================
 
+// Login
+
+const googleConfig = {
+    clientId: '533599554971-r4v411ohc19409aqkobbn98a05n90tes.apps.googleusercontent.com',
+    clientSecret: 'xFuynIbrURArdAB6TZB4l8Zt',
+    redirect: 'https://localhost:8443/auth'
+};
+
+const defaultScope = [
+    'https://www.googleapis.com/auth/plus.me',
+    'https://www.googleapis.com/auth/userinfo.email',
+];
+
+function createConnection() {
+    return new google.auth.OAuth2(
+        googleConfig.clientId,
+        googleConfig.clientSecret,
+        googleConfig.redirect
+    );
+}
+
+function getConnectionUrl(auth) {
+    return auth.generateAuthUrl({
+        access_type: 'offline',
+        prompt: 'consent',
+        scope: defaultScope
+    });
+}
+
+function googleAuthUrl() {
+    return getConnectionUrl(createConnection());
+}
+
+// function getGoogleAccountFromCode(code) {
+//     const data = await auth.getToken(code);
+//     const tokens = data.tokens;
+//     const auth = createConnection();
+//     auth.setCredentials(tokens);
+//     const plus = getGooglePlusApi(auth);
+//     const me = await plus.people.get({ userId: 'me' });
+//     const userGoogleId = me.data.id;
+//     const userGoogleEmail = me.data.emails && me.data.emails.length && me.data.emails[0].value;
+//     return {
+//       id: userGoogleId,
+//       email: userGoogleEmail,
+//       tokens: tokens,
+//     };
+// }
+
+// Middlewares
+
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+// Middleware de autenticação
+app.use( (req, res, next) => {
+    // codar
+    // res.redirect(googleAuthUrl());
+    next();
+})
+
+app.get('/', (req, res) => {
+    res.redirect('/app');
+})
+
+app.get('/auth', (req, res) => {
+    res.redirect('/app');
+})
+
+app.get('/app', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'app.html'));
+})
 
 app.route('/state')
     .get( (req, res) => {
@@ -395,7 +467,7 @@ app.post('/power', (req, res) => {
     });
 })
 
-app.use(function(req, res, next) {
+app.use( (req, res, next) => {
     res.status(404).send('Página não foi encontrada.');
 });
 
