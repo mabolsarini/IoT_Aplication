@@ -12,5 +12,10 @@
             "certFile": "secret/client.crt"
         }
     },
-    "logSensorData": false
+    "logSensorData": false,
+    "sessName": "sid",
+    "sessSecret" : "******",
+    "nodeEnv" : "development",
+    "sessLifetime" : 7200000
+  
 }

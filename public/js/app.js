@@ -7,6 +7,7 @@ const cardConfig = document.getElementById("cardConfig");
 const power = document.getElementById("power");
 const apply = document.getElementById("apply");
 const loadSymbol = document.getElementById("loadSymbol");
+const mainButton = document.getElementById("main_button");
 var isPowered;
 
 function powerOff() {
@@ -188,4 +189,9 @@ function populateSensorList(listName, sensorList) {
         document.getElementById(listName+"_List").appendChild(element);
         document.getElementById(listName +"_"+i).innerHTML += '<span style="color: blue;">'+sensor.value.toString()+'</span>';        
     });
+}
+
+function SignOut(){
+    $.post('/singout');
+    window.location.href = '/login';
 }

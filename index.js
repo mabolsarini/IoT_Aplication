@@ -3,6 +3,14 @@ const bodyParser = require("body-parser");
 const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
+const session = require('express-session');
+
+var userValidated = false;
+var logoutSignal = false;
+const CLIENT_ID = "113129105719-8e68t7a79gp5pi0jtii7m9hbbl8dptm2.apps.googleusercontent.com"
+const filesDir = __dirname + '/public/';
+
+
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -10,6 +18,7 @@ const msgCodes = JSON.parse(fs.readFileSync('config/message_codes.json'));
 const sensorsConfig = JSON.parse(fs.readFileSync('config/sensors.json'));
 
 const serverConfig = JSON.parse(fs.readFileSync('config/server.json'));
+
 const serverCredentials = {
     key: fs.readFileSync(serverConfig.https.cert.keyFile),
     cert: fs.readFileSync(serverConfig.https.cert.certFile),
@@ -341,6 +350,41 @@ function serverLog(msg) {
 
 //=======================================================================
 //
+// Autenticação e Login
+//
+//=======================================================================
+
+
+const {OAuth2Client} = require('google-auth-library');
+const { userInfo } = require('os');
+const { send } = require('process');
+const authClient = new OAuth2Client(CLIENT_ID);
+async function verify(token) {
+  const ticket = await authClient.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+      // Or, if multiple clients access the backend:
+      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+  });
+  const payload = ticket.getPayload();
+  const userid = payload['sub'];
+  // If request specified a G Suite domain:
+  const domain = payload['hd'];
+  console.log(userid);
+  if(domain != 'usp.br'){
+    throw new Error('Domain Error: "' + domain + '" is not a "usp.br" domain');
+  }
+  if(logoutSignal){
+    logoutSignal = false;
+    throw new Error('Must invalidate');
+  }
+  console.log("Deu bom?")
+  return userid;
+}
+
+
+//=======================================================================
+//
 // Roteamento e definição do servidor
 //
 //=======================================================================
@@ -348,6 +392,40 @@ function serverLog(msg) {
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+app.get('/',(req,res)=>{
+    if(userValidated) res.redirect('/main');
+    else res.redirect('/login');
+});
+
+app.route('/login')
+    .get((req,res)=>{
+        return res.sendFile(filesDir + "login.html");
+    })
+    .post((req, res) => {
+        const token = Object.keys(req.body)[0];
+        verify(token).then(value =>{
+            userValidated = true;
+            res.send(true);
+            return;
+        },reason =>{
+            console.error(reason);
+            userValidated = false;
+            res.send(false);
+            return;
+        });
+    })
+;
+
+app.get('/main',(req,res)=>{
+    if(userValidated) return res.sendFile(filesDir + "main.html");
+    return res.status(403).sendFile(filesDir + "denied.html");
+});
+
+app.post('/singout',(req,res)=>{
+    userValidated = false;
+    logoutSignal = true;
+});
 
 app.route('/state')
     .get( (req, res) => {
@@ -397,8 +475,28 @@ app.post('/power', (req, res) => {
     });
 })
 
+//=======================================================================
+//
+// Middlewares
+//
+//=======================================================================
+
+
+const in_prod = serverConfig.node_env === 'production';
+app.use(session({
+    name: serverConfig.sessName,
+    resave : false,
+    saveUninitialized : false,
+    secret : serverConfig.sessSecret,
+    cookie: {
+      maxAge : serverConfig.sessLifetime ,
+      sameSite : true,
+      secure    : in_prod
+    }
+}));
+
 app.use(function(req, res, next) {
-    res.status(404).send('Página não foi encontrada.');
+    return res.status(404).sendFile(filesDir + "denied.html");
 });
 
 if (serverConfig.http.enabled) {
@@ -412,3 +510,23 @@ if (serverConfig.https.enabled) {
         serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.https.port}`);
     })
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////    Coisas do antigo Login    //////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//Adicionando coisas do Login
+
+//Todos Essas const foram adicionadas
+//Até aqui
+
+// Configuracao do servidor Alterado
+
+
+//Adicionar
+
+
+//Verificador de autenticação válida
+
