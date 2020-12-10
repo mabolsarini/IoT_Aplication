@@ -1,3 +1,4 @@
+const mainButton = document.getElementById("main_button");
 
 function onSignIn(googleUser){
     console.log("SignIn Ok");
