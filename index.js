@@ -77,32 +77,58 @@ var clientConfig = {
 var publishSignal = false;
 var receiveSignal = false;
 var currentMsgId = -1;
-function serverLock(){
+function publishLock() {
     return new Promise( (resolve, reject) => {
-        setTimeout( () => {
-            reject();
-        }, brokerConfig.publishTimeoutMs);
         function lock() {
             if(publishSignal && receiveSignal) {
                 return resolve();
             }
             setTimeout(lock, 0);
         }
+        setTimeout( () => {
+            reject();
+        }, brokerConfig.publishTimeoutMs);
         setTimeout(lock, 0);
     });
 }
 
-function acquirePublishLock(msgId) {
+function signalPublished(msgId) {
     publishSignal = true;
     currentMsgId = msgId;
 }
 
-function releasePublishLock() {
+function signalReceived() {
+    receiveSignal = true;
+}
+
+function releaseLock() {
     publishSignal = false;
     receiveSignal = false;
     currentMsgId = -1;
 }
 
+// Semaforo para a conexao com Broker
+var connectedSignal = false;
+function connectedToBroker() {
+    return new Promise( (resolve, reject) => {
+        function lock() {
+            if (connectedSignal) {
+                return resolve();
+            }
+            setTimeout(lock, 0);
+        }
+        setTimeout( () => {
+            reject();
+        }, brokerConfig.connectionTimeoutMs);
+        setTimeout(lock, 0);
+    });
+}
+
+function signalConnected() {
+    connectedSignal = true;
+}
+
+// Funcoes auxiliares
 function generateMessageID() {
     var now = new Date();
     return Number(`${now.getDay()}${now.getHours()}${now.getMinutes()}${now.getSeconds()}${now.getMilliseconds()}`);
@@ -161,23 +187,44 @@ function publishAcState(newState) {
     var payload = generateMsgPayload(newState);
     var msgStr = serializePayload(payload);
     
-    console.log(`sent: ${msgStr}`);
-    
-    acquirePublishLock(payload.msgId);
-
+    signalPublished(payload.msgId);
     client.publish(topic, msgStr);
+
+    // debug
+    console.log(`sent: ${msgStr}`);
+}
+
+async function getAcState() {    
+    var topic = `${brokerConfig.teamId}/aircon_status/${brokerConfig.acId}`;
+    var payload = { msgId: generateMessageID() };
+    var msgStr = serializePayload(payload);
+
+    signalPublished(payload.msgId);
+    client.publish(topic, msgStr);
+
+    var ok = await publishLock().then( () => {
+        releaseLock();
+        return true;
+    }, () => {
+        releaseLock();
+        serverLog('Timeout na comunicacao com o Broker ao buscar o estado do Ar Condicionado');
+        return false;
+    });
+
+    return ok;
 }
 
 //===========
 // Subscribe
 //===========
 
+// Fazer block do servidor a partir da conexão com o tópico 1/response !!
 function subscribeToTopic(client, topic) {
     client.subscribe(topic, function (err) {
         if (!err) {
-          console.log('Inscrito no topico '+topic)
+            serverLog(`Inscrito no topico ${topic}`);
         } else {
-          console.log('Erro ao se inscrever no topico '+topic+': '+err);
+            serverLog(`Erro ao se inscrever no topico ${topic}: ${err}`);
         }
     })
 }
@@ -189,9 +236,10 @@ function subscribeToSensor(client, sensorType, sensorId) {
 
 client.on('connect', function () {
     sensorsConfig.forEach(sensor => {
-        subscribeToSensor(client, sensor.type, sensor.id);
+        subscribeToTopic(client, `${brokerConfig.roomId}/${sensor.type}/${sensor.id.toString()}`);
     })
     subscribeToTopic(client, `${brokerConfig.teamId}/response`);
+    signalConnected();
 })
 
 client.on('message', function (topic, message) {
@@ -205,7 +253,7 @@ client.on('message', function (topic, message) {
 })
 
 client.on('error', function(err){
-    console.log(err)
+    serverLog(`Erro no cliente MQTT: ${err}`);
     client.end()
 })
 
@@ -249,6 +297,7 @@ function parseSensorData(type, stringData) {
             v = data[type];
             break;
     }
+    
     return {
         name: data['0'],
         type: type,
@@ -262,9 +311,11 @@ function processAcMsg(message) {
     
     if (data.msgId === currentMsgId) {
         setAcState(acState, data);
-        receiveSignal = true;
+        signalReceived();
+
         serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
 
+        // debug
         console.log(`received: ${message.toString()}`);
     }
 }
@@ -341,6 +392,12 @@ function serverLog(msg) {
     console.log(`${generateTimestamp()} ${msg}`);
 }
 
+function stopServer(msg) {
+    serverLog(msg);
+    client.end()
+    process.exit();
+}
+
 //=======================================================================
 //
 // Roteamento e definição do servidor
@@ -405,12 +462,11 @@ app.use(bodyParser.json());
 // Middleware de autenticação
 app.use( (req, res, next) => {
     // codar
-    // res.redirect(googleAuthUrl());
     next();
 })
 
 app.get('/', (req, res) => {
-    res.redirect('/app');
+    res.redirect(googleAuthUrl());
 })
 
 app.get('/auth', (req, res) => {
@@ -425,7 +481,7 @@ app.route('/state')
     .get( (req, res) => {
         res.send(acState);
     })
-    .post( (req, res) => {        
+    .post( async (req, res) => {        
         params = castStateParams(req.body);
 
         if (validStateParams(params)) {
@@ -433,12 +489,12 @@ app.route('/state')
 
             publishAcState(params);
 
-            serverLock().then( () => {
-                releasePublishLock();
+            await publishLock().then( () => {
+                releaseLock();
                 res.sendStatus(200);
             }, () => {
-                console.log('Timeout na comunicacao com o Broker');
-                releasePublishLock();
+                serverLog('Timeout na comunicacao com o Broker');
+                releaseLock();
                 res.sendStatus(500);
             });
         } else {
@@ -452,17 +508,17 @@ app.get('/sensors', (req, res) => {
     res.send(sensors);
 })
     
-app.post('/power', (req, res) => {
+app.post('/power', async (req, res) => {
     var params = {power: !acState.power};
     publishAcState(params);
     serverLog(`Nova configuracao recebida: ${JSON.stringify(params)}`);
 
-    serverLock().then( () => {
-        releasePublishLock();
+    await publishLock().then( () => {
+        releaseLock();
         res.sendStatus(200);
     }, () => {
-        console.log('Timeout na comunicacao com o Broker');
-        releasePublishLock();
+        serverLog('Timeout na comunicacao com o Broker');
+        releaseLock();
         res.sendStatus(500);
     });
 })
@@ -471,14 +527,42 @@ app.use( (req, res, next) => {
     res.status(404).send('Página não foi encontrada.');
 });
 
-if (serverConfig.http.enabled) {
-    http.listen(serverConfig.http.port, () => {
-    serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.http.port}`);
-    })
+async function runServer() {
+    serverLog('Connectando ao Broker...');
+    var connected = await connectedToBroker().then( () => {
+        return true;
+    }, () => {
+        serverLog('Timeout ao se conectar ao Broker');
+        return false;
+    } );
+
+    if (!connected) {
+        stopServer('Não foi possivel se conectar ao Broker');
+    } else {
+        serverLog('Connectado ao Broker');
+    }
+
+    serverLog('Buscando estado atual do Ar Condicionado');
+
+    var stateSet = await getAcState();
+    if (!stateSet) {
+        stopServer('Nao foi possivel buscar o estado do Ar Condicionado');
+    } else {
+        serverLog('Estado do Ar Condicionado configurado');
+    }
+    
+    if (connected && stateSet) {
+        if (serverConfig.https.enabled) {
+            https.listen(serverConfig.https.port, () => {
+                serverLog(`Servidor HTTP da aplicacao rodando em http://${serverConfig.hostname}:${serverConfig.https.port}`);
+            })
+        }
+        if (serverConfig.http.enabled) {
+            http.listen(serverConfig.http.port, () => {
+                serverLog(`Servidor HTTPS da aplicacao rodando em http://${serverConfig.hostname}:${serverConfig.http.port}`);
+            })
+        }
+    }
 }
 
-if (serverConfig.https.enabled) {
-    https.listen(serverConfig.https.port, () => {
-        serverLog(`Servidor da aplicacao rodando em http://localhost:${serverConfig.https.port}`);
-    })
-}
+runServer();

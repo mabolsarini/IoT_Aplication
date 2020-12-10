@@ -4,6 +4,7 @@
     "teamId": "1",
     "roomId": "2",
     "acId": "23",
+    "connectionTimeoutMs": 5000,
     "publishTimeoutMs": 2000,
     "auth": {
         "user": "broker",
