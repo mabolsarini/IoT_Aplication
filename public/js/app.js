@@ -146,7 +146,11 @@ function initValues() {
 function initAcState() {
     $.get('/state', data => {
         isPowered = data.power;
-        if (isPowered) powerOn(); else powerOff();
+        if (isPowered) {
+            powerOn();
+        } else {
+            powerOff();
+        }
 
         tMin.value = data.tMin;
         changeRangeVal("tMin");

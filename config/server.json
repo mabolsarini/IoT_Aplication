@@ -12,5 +12,5 @@
             "certFile": "secret/client.crt"
         }
     },
-    "logSensorData": false
+    "debugMethods": ["GET", "POST"]
 }

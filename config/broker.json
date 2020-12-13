@@ -12,5 +12,7 @@
         "keyFile": "secret/client.key",
         "certFile": "secret/client.crt",
         "caFile": "secret/ca.crt"
-    }
+    },
+    "debugPublish": true,
+    "debugSubscribe": true
 }

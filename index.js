@@ -4,7 +4,9 @@ const app = express();
 const fs = require('fs');
 const mqtt = require('mqtt');
 const { google } = require('googleapis');
-var path = require('path');
+const path = require('path');
+const session = require('express-session');
+const MemoryStore = require('memorystore')(session);
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -30,14 +32,7 @@ const http = require('http').createServer(app);
 const https = require('https').createServer(serverCredentials, app);
 
 // Estado inicial do menu de configuracao do ar condicionado (MOCK)
-var acState = {
-    tMin: 16,
-    tMax: 18,
-    delay: 10,
-    tOp: 17,
-    power: false,
-    powerOnIdle: true
-}
+var acState = {}
 
 // Inicializando sensores
 var sensors = {
@@ -148,6 +143,8 @@ function getMsgCode(msgPayload) {
 // Ela compara o novo estado solicitado pelo usuario com o estado atual e retorna
 // apenas os campos que foram diferentes
 function generateMsgPayload(newState) {
+    
+    // VALIDAR FUNCIONAMENTO
     var payload = {};
 
     Object.keys(newState).forEach( key => {
@@ -180,43 +177,54 @@ function serializePayload(payload) {
     return JSON.stringify(msg);
 }
 
-function publishAcState(newState) {
-    var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
 
-    // Retorna apenas os campos que forem diferentes
-    var payload = generateMsgPayload(newState);
-    var msgStr = serializePayload(payload);
+function publishMessage(topic, msgStr) {
+// function publishMessage(topic, payload) {
+    // var msgStr = serializePayload(payload);
+    // signalPublished(payload.msgId);
+    // client.publish(topic, msgStr);
     
-    signalPublished(payload.msgId);
+    signalPublished(msgStr);
     client.publish(topic, msgStr);
 
-    // debug
-    console.log(`sent: ${msgStr}`);
+    if (brokerConfig.debugPublish) {
+        serverLog(`Mensagem enviada ao topico ${topic}: ${msgStr}`);
+    }
+}
+
+async function publishAcState(params) {
+    serverLog(`Ac State: ${JSON.stringify(acState)}`);
+    serverLog(`Nova configuracao a ser publicada: ${JSON.stringify(params)}`);
+
+    var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
+    var payload = generateMsgPayload(params);
+    
+    var msgStr = serializePayload(payload);
+    publishMessage(topic, msgStr);
 }
 
 async function getAcState() {    
-    var topic = `${brokerConfig.teamId}/aircon_status/${brokerConfig.acId}`;
-    var payload = { msgId: generateMessageID() };
-    var msgStr = serializePayload(payload);
+    // serverLog('Buscando estado atual do Ar Condicionado');
 
-    signalPublished(payload.msgId);
-    client.publish(topic, msgStr);
+    var topic = `aircon_status`;
+    // var payload = {};
+
+    publishMessage(topic, "1");
 
     var ok = await publishLock().then( () => {
         releaseLock();
         return true;
     }, () => {
         releaseLock();
-        serverLog('Timeout na comunicacao com o Broker ao buscar o estado do Ar Condicionado');
         return false;
     });
 
     return ok;
 }
 
-//===========
+//============
 // Subscribe
-//===========
+//============
 
 // Fazer block do servidor a partir da conexão com o tópico 1/response !!
 function subscribeToTopic(client, topic) {
@@ -229,11 +237,6 @@ function subscribeToTopic(client, topic) {
     })
 }
 
-function subscribeToSensor(client, sensorType, sensorId) {
-    var topic = `${brokerConfig.roomId}/${sensorType}/${sensorId.toString()}`;
-    subscribeToTopic(client, topic);
-}
-
 client.on('connect', function () {
     sensorsConfig.forEach(sensor => {
         subscribeToTopic(client, `${brokerConfig.roomId}/${sensor.type}/${sensor.id.toString()}`);
@@ -243,6 +246,10 @@ client.on('connect', function () {
 })
 
 client.on('message', function (topic, message) {
+    if (brokerConfig.debugSubscribe) {
+        serverLog(`Mensagem recebida no topico ${topic}: ${message.toString()}`);
+    }
+    
     var msgType = topic.split('/')[1];
 
     if (msgType === 'response') {
@@ -255,6 +262,14 @@ client.on('message', function (topic, message) {
 client.on('error', function(err){
     serverLog(`Erro no cliente MQTT: ${err}`);
     client.end()
+})
+
+client.on('close', function () {
+    stopServer('Conexao com o Broker perdida.');
+})
+
+client.on('offline', function () {
+    stopServer('Conexao com o Broker perdida.');
 })
 
 //=======================================================================
@@ -276,9 +291,6 @@ function processSensorMsg(topic, message) {
         sensors[sensorType][index] = data;
     }
     
-    if (serverConfig.logSensorData) {
-        serverLog(`Dados de sensor: ${JSON.stringify(data)}`);
-    }
 }
 
 // Parsear mensagens dos topicos dos sensores
@@ -308,15 +320,16 @@ function parseSensorData(type, stringData) {
 function processAcMsg(message) {
     var rawData = message.toString();
     var data = parseAcData(rawData);
+
+    if (currentMsgId === -1 ) {
+        acState = data;
+        serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
+    }
     
     if (data.msgId === currentMsgId) {
-        setAcState(acState, data);
+        acState = data;
+        serverLog(`Novo estado do ar condicionado configurado, em resposta a mensagem ${currentMsgId}: ${JSON.stringify(data)}`);
         signalReceived();
-
-        serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
-
-        // debug
-        console.log(`received: ${message.toString()}`);
     }
 }
 
@@ -378,15 +391,6 @@ function validStateParams(params) {
     return true;
 }
 
-function setAcState(state, params) {
-    Object.keys(params).forEach( key => {
-        if (key in state) {
-            state[key] = params[key];
-        }
-    })
-    return state;
-}
-
 // Log com timestamp
 function serverLog(msg) {
     console.log(`${generateTimestamp()} ${msg}`);
@@ -394,7 +398,7 @@ function serverLog(msg) {
 
 function stopServer(msg) {
     serverLog(msg);
-    client.end()
+    client.end();
     process.exit();
 }
 
@@ -409,71 +413,101 @@ function stopServer(msg) {
 const googleConfig = {
     clientId: '533599554971-r4v411ohc19409aqkobbn98a05n90tes.apps.googleusercontent.com',
     clientSecret: 'xFuynIbrURArdAB6TZB4l8Zt',
-    redirect: 'https://localhost:8443/auth'
+    redirect: 'https://localhost:8443/auth',
+    scopes: [
+        'https://www.googleapis.com/auth/plus.me',
+        'https://www.googleapis.com/auth/userinfo.email',
+    ]
 };
-
-const defaultScope = [
-    'https://www.googleapis.com/auth/plus.me',
-    'https://www.googleapis.com/auth/userinfo.email',
-];
-
-function createConnection() {
-    return new google.auth.OAuth2(
+const OAuthClient = new google.auth.OAuth2(
         googleConfig.clientId,
         googleConfig.clientSecret,
         googleConfig.redirect
-    );
-}
+);
 
 function getConnectionUrl(auth) {
     return auth.generateAuthUrl({
         access_type: 'offline',
         prompt: 'consent',
-        scope: defaultScope
+        scope: googleConfig.scopes
     });
 }
 
 function googleAuthUrl() {
-    return getConnectionUrl(createConnection());
+    return getConnectionUrl(OAuthClient);
 }
 
-// function getGoogleAccountFromCode(code) {
-//     const data = await auth.getToken(code);
-//     const tokens = data.tokens;
-//     const auth = createConnection();
-//     auth.setCredentials(tokens);
-//     const plus = getGooglePlusApi(auth);
-//     const me = await plus.people.get({ userId: 'me' });
-//     const userGoogleId = me.data.id;
-//     const userGoogleEmail = me.data.emails && me.data.emails.length && me.data.emails[0].value;
-//     return {
-//       id: userGoogleId,
-//       email: userGoogleEmail,
-//       tokens: tokens,
-//     };
-// }
-
 // Middlewares
+
+app.set('trust proxy', 1);
+const sessMaxAge = 86400000;
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    store: new MemoryStore({
+        checkPeriod: sessMaxAge
+    }),
+    cookie: {
+        secure: true,
+        maxAge: sessMaxAge
+    }
+}));
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Middleware de autenticação
-app.use( (req, res, next) => {
-    // codar
-    next();
+// auth
+app.use( async (req, res, next) => {
+    if (serverConfig.debugMethods.includes(req.method) && req.path !== '/sensors') {
+        serverLog(`${req.protocol.toUpperCase()} Request: ${req.method} ${req.path}`);
+        serverLog(`\tSessionID: ${JSON.stringify(req.sessionID)}`);
+        serverLog(`\tSession: ${JSON.stringify(req.session)}`);
+        serverLog(`\tQuery: ${JSON.stringify(req.query)}`);
+    }
+
+    if (req.path === '/auth') {
+        next();
+    } else {
+        var authorized = false;
+        if (req.session.tokens) {
+            var {tokens} = await OAuthClient.getToken(req.session.tokens);
+            
+            const ticket = await OAuthClient.verifyIdToken({
+                idToken: tokens.id_token,
+                audience: googleConfig.clientId,
+            });
+
+            const payload = ticket.getPayload();
+            serverLog(`payload: ${JSON.stringify(payload)}`);
+            if (payload.hd === "usp.br") {
+                authorized = true;
+            }
+        }
+        serverLog(`\tAuthorized: ${authorized}`);
+
+        if (authorized) {
+            next();
+        } else {
+            if (req.path === '/') {
+                res.redirect(googleAuthUrl());
+            } else {
+                res.sendStatus(401);
+            }
+        }
+    }        
+})
+
+app.get('/auth', async (req, res) => {
+    var code = req.query.code;
+    var {tokens} = await OAuthClient.getToken(code);
+    OAuthClient.setCredentials(tokens);
+    req.session.tokens = tokens;
+    res.redirect('/');
 })
 
 app.get('/', (req, res) => {
-    res.redirect(googleAuthUrl());
-})
-
-app.get('/auth', (req, res) => {
-    res.redirect('/app');
-})
-
-app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'app.html'));
 })
 
@@ -482,19 +516,17 @@ app.route('/state')
         res.send(acState);
     })
     .post( async (req, res) => {        
-        params = castStateParams(req.body);
+        var params = castStateParams(req.body);
 
         if (validStateParams(params)) {
-            serverLog(`Nova configuracao recebida: ${JSON.stringify(params)}`);
-
             publishAcState(params);
-
+            
             await publishLock().then( () => {
                 releaseLock();
                 res.sendStatus(200);
             }, () => {
-                serverLog('Timeout na comunicacao com o Broker');
                 releaseLock();
+                serverLog('Timeout na comunicacao com o Broker');
                 res.sendStatus(500);
             });
         } else {
@@ -510,15 +542,15 @@ app.get('/sensors', (req, res) => {
     
 app.post('/power', async (req, res) => {
     var params = {power: !acState.power};
-    publishAcState(params);
-    serverLog(`Nova configuracao recebida: ${JSON.stringify(params)}`);
 
+    publishAcState(params);
+    
     await publishLock().then( () => {
         releaseLock();
         res.sendStatus(200);
     }, () => {
-        serverLog('Timeout na comunicacao com o Broker');
         releaseLock();
+        serverLog('Timeout na comunicacao com o Broker');
         res.sendStatus(500);
     });
 })
@@ -529,39 +561,36 @@ app.use( (req, res, next) => {
 
 async function runServer() {
     serverLog('Connectando ao Broker...');
-    var connected = await connectedToBroker().then( () => {
+    await connectedToBroker().then( () => {
         return true;
     }, () => {
         serverLog('Timeout ao se conectar ao Broker');
         return false;
     } );
 
-    if (!connected) {
+    if (!client.connected) {
         stopServer('Não foi possivel se conectar ao Broker');
     } else {
         serverLog('Connectado ao Broker');
     }
 
-    serverLog('Buscando estado atual do Ar Condicionado');
+    // var ok = await getAcState();
+    // if (!ok) {
+    //     serverLog('Timeout na comunicacao com o Broker ao buscar o estado do Ar Condicionado');
+    //     stopServer('Nao foi possivel buscar o estado do Ar Condicionado');
+    // } else {
+    //     serverLog('Estado do Ar Condicionado configurado');
+    // }
 
-    var stateSet = await getAcState();
-    if (!stateSet) {
-        stopServer('Nao foi possivel buscar o estado do Ar Condicionado');
-    } else {
-        serverLog('Estado do Ar Condicionado configurado');
+    if (serverConfig.http.enabled) {
+        http.listen(serverConfig.http.port, () => {
+            serverLog(`Servidor da aplicacao rodando em http://${serverConfig.hostname}:${serverConfig.http.port}`);
+        })
     }
-    
-    if (connected && stateSet) {
-        if (serverConfig.https.enabled) {
-            https.listen(serverConfig.https.port, () => {
-                serverLog(`Servidor HTTP da aplicacao rodando em http://${serverConfig.hostname}:${serverConfig.https.port}`);
-            })
-        }
-        if (serverConfig.http.enabled) {
-            http.listen(serverConfig.http.port, () => {
-                serverLog(`Servidor HTTPS da aplicacao rodando em http://${serverConfig.hostname}:${serverConfig.http.port}`);
-            })
-        }
+    if (serverConfig.https.enabled) {
+        https.listen(serverConfig.https.port, () => {
+            serverLog(`Servidor da aplicacao rodando em https://${serverConfig.hostname}:${serverConfig.https.port}`);
+        })
     }
 }
 
