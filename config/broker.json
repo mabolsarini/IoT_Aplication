@@ -13,6 +13,6 @@
         "certFile": "secret/client.crt",
         "caFile": "secret/ca.crt"
     },
-    "debugPublish": true,
-    "debugSubscribe": true
+    "debugPublish": false,
+    "debugSubscribe": false
 }

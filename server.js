@@ -6,7 +6,10 @@ const mqtt = require('mqtt');
 const { google } = require('googleapis');
 const path = require('path');
 const session = require('express-session');
+const { resolve } = require('path');
+const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
 const MemoryStore = require('memorystore')(session);
+const crypto = require('crypto');
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -18,6 +21,7 @@ const serverCredentials = {
     key: fs.readFileSync(serverConfig.https.cert.keyFile),
     cert: fs.readFileSync(serverConfig.https.cert.certFile),
 }
+const oauthCedentials = JSON.parse(fs.readFileSync(serverConfig.auth.oauthCredentialsFile));
 
 const brokerConfig = JSON.parse(fs.readFileSync('config/broker.json'));
 const brokerCredentials = {
@@ -26,6 +30,7 @@ const brokerCredentials = {
     cert: fs.readFileSync(brokerConfig.auth.certFile).toString(),
     ca: fs.readFileSync(brokerConfig.auth.caFile).toString()
 }
+
 
 // Instanciando servidores http e https
 const http = require('http').createServer(app);
@@ -142,14 +147,14 @@ function getMsgCode(msgPayload) {
 // Funcao que gera o conteudo da mensagem de configuracao do ar condicionado a ser enviada
 // Ela compara o novo estado solicitado pelo usuario com o estado atual e retorna
 // apenas os campos que foram diferentes
-function generateMsgPayload(newState) {
+function generateMsgPayload(params) {
     
     // VALIDAR FUNCIONAMENTO
     var payload = {};
 
-    Object.keys(newState).forEach( key => {
-        if (newState[key] !== acState[key]) {
-            payload[key] = newState[key];
+    Object.keys(params).forEach( key => {
+        if (params[key] !== acState[key]) {
+            payload[key] = params[key];
         }
     })
 
@@ -178,12 +183,7 @@ function serializePayload(payload) {
 }
 
 
-function publishMessage(topic, msgStr) {
-// function publishMessage(topic, payload) {
-    // var msgStr = serializePayload(payload);
-    // signalPublished(payload.msgId);
-    // client.publish(topic, msgStr);
-    
+function publishMessage(topic, msgStr) {    
     signalPublished(msgStr);
     client.publish(topic, msgStr);
 
@@ -203,30 +203,22 @@ async function publishAcState(params) {
     publishMessage(topic, msgStr);
 }
 
-async function getAcState() {    
-    // serverLog('Buscando estado atual do Ar Condicionado');
+async function getAcState() {
+    publishMessage(`aircon_status`, "1");
 
-    var topic = `aircon_status`;
-    // var payload = {};
-
-    publishMessage(topic, "1");
-
-    var ok = await publishLock().then( () => {
+    await publishLock().then( () => {
         releaseLock();
-        return true;
+        resolve();
     }, () => {
         releaseLock();
-        return false;
+        reject();
     });
-
-    return ok;
 }
 
 //============
 // Subscribe
 //============
 
-// Fazer block do servidor a partir da conexão com o tópico 1/response !!
 function subscribeToTopic(client, topic) {
     client.subscribe(topic, function (err) {
         if (!err) {
@@ -347,11 +339,6 @@ function parseAcData(stringData) {
     }
 }
 
-// function parseTimestamp(tsString) {
-//     var pattern = /(\d{2})\/(\d{2})\/(\d{4})\ (\d{2}):(\d{2}):(\d{2})/
-//     return new Date(tsString.replace(pattern,'$3-$2-$1T$4:$5:$6'));
-// }
-
 function generateTimestamp() {
     var now = new Date(); 
     return (
@@ -397,7 +384,7 @@ function serverLog(msg) {
 }
 
 function stopServer(msg) {
-    serverLog(msg);
+    serverLog(`Encerrando servidor: ${msg}`);
     client.end();
     process.exit();
 }
@@ -409,106 +396,113 @@ function stopServer(msg) {
 //=======================================================================
 
 // Login
-
-const googleConfig = {
-    clientId: '533599554971-r4v411ohc19409aqkobbn98a05n90tes.apps.googleusercontent.com',
-    clientSecret: 'xFuynIbrURArdAB6TZB4l8Zt',
-    redirect: 'https://localhost:8443/auth',
-    scopes: [
-        'https://www.googleapis.com/auth/plus.me',
-        'https://www.googleapis.com/auth/userinfo.email',
-    ]
-};
 const OAuthClient = new google.auth.OAuth2(
-        googleConfig.clientId,
-        googleConfig.clientSecret,
-        googleConfig.redirect
+        oauthCedentials.clientId,
+        oauthCedentials.clientSecret,
+        oauthCedentials.redirect
 );
 
-function getConnectionUrl(auth) {
-    return auth.generateAuthUrl({
+function googleAuthUrl(client) {
+    return client.generateAuthUrl({
         access_type: 'offline',
         prompt: 'consent',
-        scope: googleConfig.scopes
+        scope: oauthCedentials.scopes
     });
 }
 
-function googleAuthUrl() {
-    return getConnectionUrl(OAuthClient);
+// Verifica se o token é valido pela API do OAuth, e se o dominio do email do usuario é "usp.br"
+async function validateAccessTokens(tokens) {
+    if (tokens === undefined) {
+        reject();
+    }
+    var ticket = await OAuthClient.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: oauthCedentials.clientId
+    }).then( (ticket) => {
+        var payload = ticket.getPayload();
+        if (payload.hd === "usp.br") {
+            resolve();
+        } else {
+            reject();
+        }
+    }, () => {
+        reject();
+    } );
 }
 
 // Middlewares
-
-app.set('trust proxy', 1);
-const sessMaxAge = 86400000;
-app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    store: new MemoryStore({
-        checkPeriod: sessMaxAge
-    }),
-    cookie: {
-        secure: true,
-        maxAge: sessMaxAge
-    }
-}));
-
-app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// auth
+// Session middleware
+app.set('trust proxy', 1);
+app.use(session({
+    secret: crypto.randomBytes(20).toString("hex"),
+    resave: false,
+    saveUninitialized: true,
+    store: new MemoryStore({
+        checkPeriod: serverConfig.auth.sessMaxAge
+    }),
+    cookie: {
+        secure: true,
+        maxAge: serverConfig.auth.sessMaxAge
+    }
+}));
+
+// Auth Middleware
 app.use( async (req, res, next) => {
-    if (serverConfig.debugMethods.includes(req.method) && req.path !== '/sensors') {
-        serverLog(`${req.protocol.toUpperCase()} Request: ${req.method} ${req.path}`);
-        serverLog(`\tSessionID: ${JSON.stringify(req.sessionID)}`);
-        serverLog(`\tSession: ${JSON.stringify(req.session)}`);
-        serverLog(`\tQuery: ${JSON.stringify(req.query)}`);
+    var tokens = undefined;
+    var authorized = false;
+    var tokenFrom = "none";
+
+    // Tenta pegar o token da sessao, seno, pega da query
+    if (req.session.tokens) {
+        tokens = req.session.tokens;
+        tokenFrom = "session";
+    } else if (req.query.code) {        
+        try {
+            var code = await OAuthClient.getToken(req.query.code);
+            tokens = code.tokens;
+            req.session.tokens = tokens;
+            tokenFrom = "query";
+        } catch (e) {
+            tokens = undefined;
+            authorized = false;
+            tokenFrom = "none";
+        }
     }
 
-    if (req.path === '/auth') {
+    // Valida o token
+    authorized = await validateAccessTokens(tokens).then( () => {
+        req.session.tokens = tokens;
+        return true;
+    }, () => {
+        return false;
+    } );
+
+    // Debug
+    if (serverConfig.auth.debugMethods.includes(req.method) && req.path !== '/sensors') {
+        serverLog(`${req.protocol.toUpperCase()} Request: ${req.method} ${req.path}`);
+        serverLog(`\tSessionID: ${JSON.stringify(req.sessionID)}`);
+        serverLog(`\tToken from: ${tokenFrom}`);
+        serverLog(`\tAuthorized: ${authorized}`);
+    }
+
+    if (authorized) {
         next();
     } else {
-        var authorized = false;
-        if (req.session.tokens) {
-            var {tokens} = await OAuthClient.getToken(req.session.tokens);
-            
-            const ticket = await OAuthClient.verifyIdToken({
-                idToken: tokens.id_token,
-                audience: googleConfig.clientId,
-            });
-
-            const payload = ticket.getPayload();
-            serverLog(`payload: ${JSON.stringify(payload)}`);
-            if (payload.hd === "usp.br") {
-                authorized = true;
-            }
-        }
-        serverLog(`\tAuthorized: ${authorized}`);
-
-        if (authorized) {
-            next();
+        if (serverConfig.auth.redirectOnUnauthorized.includes(req.path)) {
+            res.redirect(googleAuthUrl(OAuthClient));
         } else {
-            if (req.path === '/') {
-                res.redirect(googleAuthUrl());
-            } else {
-                res.sendStatus(401);
-            }
+            res.sendStatus(401);
         }
-    }        
+    }
 })
 
-app.get('/auth', async (req, res) => {
-    var code = req.query.code;
-    var {tokens} = await OAuthClient.getToken(code);
-    OAuthClient.setCredentials(tokens);
-    req.session.tokens = tokens;
-    res.redirect('/');
-})
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'app.html'));
+    res.sendFile(path.join(__dirname, 'src', 'app.html'));
 })
 
 app.route('/state')
@@ -574,13 +568,12 @@ async function runServer() {
         serverLog('Connectado ao Broker');
     }
 
-    // var ok = await getAcState();
-    // if (!ok) {
+    // await getAcState().then( () => {
+    //     serverLog('Estado do Ar Condicionado configurado');
+    // }, () => {
     //     serverLog('Timeout na comunicacao com o Broker ao buscar o estado do Ar Condicionado');
     //     stopServer('Nao foi possivel buscar o estado do Ar Condicionado');
-    // } else {
-    //     serverLog('Estado do Ar Condicionado configurado');
-    // }
+    // });
 
     if (serverConfig.http.enabled) {
         http.listen(serverConfig.http.port, () => {

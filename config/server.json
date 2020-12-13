@@ -12,5 +12,10 @@
             "certFile": "secret/client.crt"
         }
     },
-    "debugMethods": ["GET", "POST"]
+    "auth" : {
+        "oauthCredentialsFile": "secret/oauth_credentials.json",
+        "sessMaxAge": 86400000,
+        "debugMethods": [],
+        "redirectOnUnauthorized": ["/"]
+    }
 }
