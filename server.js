@@ -478,7 +478,7 @@ app.use(session({
         checkPeriod: serverConfig.auth.sessMaxAge
     }),
     cookie: {
-        secure: true,
+        secure: serverConfig.https.enabled,
         maxAge: serverConfig.auth.sessMaxAge
     }
 }));

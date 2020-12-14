@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/AraujoVE/IoT_Aplication.git"
   },
-  "author": "time1-grupo21",
+  "author": "time1-grupo22",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/AraujoVE/IoT_Aplication/issues"
@@ -23,6 +23,6 @@
     "googleapis": "^65.0.0",
     "memorystore": "^1.6.4",
     "mqtt": "^4.2.6",
-    "socket.io": "^3.0.1",
+    "socket.io": "^3.0.1"
   }
 }
