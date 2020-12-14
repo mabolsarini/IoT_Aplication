@@ -13,6 +13,9 @@
         "certFile": "secret/client.crt",
         "caFile": "secret/ca.crt"
     },
-    "debugPublish": false,
-    "debugSubscribe": false
+    "debug": {
+        "publish": true,
+        "subscribe": true,
+        "ignoreSensors": true
+    }
 }

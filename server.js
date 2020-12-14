@@ -7,9 +7,14 @@ const { google } = require('googleapis');
 const path = require('path');
 const session = require('express-session');
 const { resolve } = require('path');
-const { auth } = require('googleapis/build/src/apis/abusiveexperiencereport');
 const MemoryStore = require('memorystore')(session);
 const crypto = require('crypto');
+
+//=======================================================================
+//
+// Configuracao inicial
+//
+//=======================================================================
 
 // Lendo arquivos de configuracao e credenciais
 const msgFields = JSON.parse(fs.readFileSync('config/message_fields.json'));
@@ -31,15 +36,12 @@ const brokerCredentials = {
     ca: fs.readFileSync(brokerConfig.auth.caFile).toString()
 }
 
-
-// Instanciando servidores http e https
+// Instanciando servidores
 const http = require('http').createServer(app);
 const https = require('https').createServer(serverCredentials, app);
 
-// Estado inicial do menu de configuracao do ar condicionado (MOCK)
+// Estado - em memoria, poderia ser alguma solução de banco/cache como Redis
 var acState = {}
-
-// Inicializando sensores
 var sensors = {
     temp: [],
     umid: [],
@@ -49,29 +51,9 @@ var sensors = {
 
 //=======================================================================
 //
-// Interação com o Boker MQTT
-// https://github.com/mqttjs/MQTT.js
+// Semaforos
 //
 //=======================================================================
-
-// Conectando com broker
-var clientConfig = {
-    host: brokerConfig.endpoint,
-    port: brokerConfig.port,
-    protocol: "mqtts",
-    secureProtocol: "TLSv1_method",
-    protocolId: "MQIsdp",
-    protocolVersion: 3,
-    username: brokerConfig.auth.user,
-    password: brokerCredentials.pass,
-    ca: [brokerCredentials.ca],
-    key: brokerCredentials.key,
-    cert: brokerCredentials.cert
-}; var client = mqtt.connect(clientConfig);
-
-//==========
-// Publish
-//==========
 
 // Semaforo para a publicacao de estados (travar o servidor até que Broker responda)
 var publishSignal = false;
@@ -128,13 +110,105 @@ function signalConnected() {
     connectedSignal = true;
 }
 
-// Funcoes auxiliares
+//=======================================================================
+//
+// Configuracao da conexao com o Broker
+//
+//=======================================================================
+
+// Conectando com broker
+var clientConfig = {
+    host: brokerConfig.endpoint,
+    port: brokerConfig.port,
+    protocol: "mqtts",
+    secureProtocol: "TLSv1_method",
+    protocolId: "MQIsdp",
+    protocolVersion: 3,
+    username: brokerConfig.auth.user,
+    password: brokerCredentials.pass,
+    ca: [brokerCredentials.ca],
+    key: brokerCredentials.key,
+    cert: brokerCredentials.cert
+}; var client = mqtt.connect(clientConfig);
+
+client.on('connect', function () {
+    sensorsConfig.forEach(sensor => {
+        subscribeToTopic(client, `${brokerConfig.roomId}/${sensor.type}/${sensor.id.toString()}`);
+    })
+    subscribeToTopic(client, `${brokerConfig.teamId}/response`);
+    signalConnected();
+})
+
+client.on('error', function(err){
+    serverLog(`Erro no cliente MQTT: ${err}`);
+    client.end()
+})
+
+client.on('close', function () {
+    stopServer('Conexao com o Broker perdida.');
+})
+
+client.on('offline', function () {
+    stopServer('Conexao com o Broker perdida.');
+})
+
+//=======================================================================
+//
+// Publish
+//
+//=======================================================================
+
+function publishMessage(topic, payload) {
+    var msg = serializePayload(payload);
+
+    client.publish(topic, msg);
+    signalPublished(payload.msgId);
+
+    if (brokerConfig.debug.publish) {
+        serverLog(`Mensagem publicada para o topico ${topic}: ${msg}`);
+    }
+}
+
+async function publishAcState(params) {
+    serverLog(`Nova configuracao a ser publicada: ${JSON.stringify(params)}`);
+    
+    var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
+    var payload = generateMsgPayload(params);
+    
+    if (payload.msgCode > 0) {
+        publishMessage(topic, payload);
+    } else {
+        serverLog(`Configuracao igual a atual. Nada a ser feito`)
+        signalPublished();
+        signalReceived();
+    }
+}
+
+// async function getAcState() {
+//     publishMessage(`aircon_status`, {msgId: generateMessageID()});
+
+//     await publishLock().then( () => {
+//         releaseLock();
+//         resolve();
+//     }, () => {
+//         releaseLock();
+//         reject();
+//     });
+// }
+
+//=======================================================================
+//
+// Publish: Funcoes auxiliares
+//
+//=======================================================================
+
+// ID unico da mensagem
 function generateMessageID() {
     var now = new Date();
     return Number(`${now.getDay()}${now.getHours()}${now.getMinutes()}${now.getSeconds()}${now.getMilliseconds()}`);
 }
 
-// Computa o codigo da mensagem a ser enviada
+// Campo de codigo da mensagem
 function getMsgCode(msgPayload) {    
     var sum = 0;
     Object.keys(msgPayload).forEach( key => {
@@ -182,42 +256,11 @@ function serializePayload(payload) {
     return JSON.stringify(msg);
 }
 
-
-function publishMessage(topic, msgStr) {    
-    signalPublished(msgStr);
-    client.publish(topic, msgStr);
-
-    if (brokerConfig.debugPublish) {
-        serverLog(`Mensagem enviada ao topico ${topic}: ${msgStr}`);
-    }
-}
-
-async function publishAcState(params) {
-    serverLog(`Ac State: ${JSON.stringify(acState)}`);
-    serverLog(`Nova configuracao a ser publicada: ${JSON.stringify(params)}`);
-
-    var topic = `${brokerConfig.teamId}/aircon/${brokerConfig.acId}`;
-    var payload = generateMsgPayload(params);
-    
-    var msgStr = serializePayload(payload);
-    publishMessage(topic, msgStr);
-}
-
-async function getAcState() {
-    publishMessage(`aircon_status`, "1");
-
-    await publishLock().then( () => {
-        releaseLock();
-        resolve();
-    }, () => {
-        releaseLock();
-        reject();
-    });
-}
-
-//============
+//=======================================================================
+//
 // Subscribe
-//============
+//
+//=======================================================================
 
 function subscribeToTopic(client, topic) {
     client.subscribe(topic, function (err) {
@@ -225,50 +268,36 @@ function subscribeToTopic(client, topic) {
             serverLog(`Inscrito no topico ${topic}`);
         } else {
             serverLog(`Erro ao se inscrever no topico ${topic}: ${err}`);
+            if (msgType(topic) == 'response') {
+                stopServer(`Nao foi possivel se inscrever no topico de respostas do Ar Condicionado`)
+            }
         }
     })
 }
 
-client.on('connect', function () {
-    sensorsConfig.forEach(sensor => {
-        subscribeToTopic(client, `${brokerConfig.roomId}/${sensor.type}/${sensor.id.toString()}`);
-    })
-    subscribeToTopic(client, `${brokerConfig.teamId}/response`);
-    signalConnected();
-})
-
-client.on('message', function (topic, message) {
-    if (brokerConfig.debugSubscribe) {
-        serverLog(`Mensagem recebida no topico ${topic}: ${message.toString()}`);
+client.on('message', function (topic, message) {    
+    if (brokerConfig.debug.subscribe) {
+        if (msgType(topic) === 'response' || !brokerConfig.debug.ignoreSensors) {
+            serverLog(`Mensagem recebida no topico ${topic}: ${message.toString()}`);
+        }
     }
-    
-    var msgType = topic.split('/')[1];
 
-    if (msgType === 'response') {
+    if (msgType(topic) === 'response') {
         processAcMsg(message);
     } else {
         processSensorMsg(topic, message);
     }
 })
 
-client.on('error', function(err){
-    serverLog(`Erro no cliente MQTT: ${err}`);
-    client.end()
-})
-
-client.on('close', function () {
-    stopServer('Conexao com o Broker perdida.');
-})
-
-client.on('offline', function () {
-    stopServer('Conexao com o Broker perdida.');
-})
-
 //=======================================================================
 //
-// Funções auxiliares para o servidor
+// Subscribe: Funcoes auxiliares
 //
 //=======================================================================
+
+function msgType(topic) {
+    return topic.split('/')[1];
+}
 
 function processSensorMsg(topic, message) {
     var rawData = message.toString();
@@ -285,7 +314,6 @@ function processSensorMsg(topic, message) {
     
 }
 
-// Parsear mensagens dos topicos dos sensores
 function parseSensorData(type, stringData) {
     data = JSON.parse(stringData);
     
@@ -315,14 +343,14 @@ function processAcMsg(message) {
 
     if (currentMsgId === -1 ) {
         acState = data;
-        serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
     }
     
     if (data.msgId === currentMsgId) {
         acState = data;
-        serverLog(`Novo estado do ar condicionado configurado, em resposta a mensagem ${currentMsgId}: ${JSON.stringify(data)}`);
         signalReceived();
     }
+
+    serverLog(`Novo estado do ar condicionado configurado: ${JSON.stringify(data)}`);
 }
 
 function parseAcData(stringData) {
@@ -339,15 +367,12 @@ function parseAcData(stringData) {
     }
 }
 
-function generateTimestamp() {
-    var now = new Date(); 
-    return (
-        "00" + (now.getMonth() + 1)).slice(-2) + "/" + (
-        "00" + now.getDate()).slice(-2) + "/" + now.getFullYear() + " " + (
-        "00" + now.getHours()).slice(-2) + ":" + (
-        "00" + now.getMinutes()).slice(-2) + ":" + (
-        "00" + now.getSeconds()).slice(-2);
-}
+
+//=======================================================================
+//
+// Funcoes auxiliares para o servidor
+//
+//=======================================================================
 
 function castStateParams(reqBody) {
     return {
@@ -378,6 +403,16 @@ function validStateParams(params) {
     return true;
 }
 
+function generateTimestamp() {
+    var now = new Date(); 
+    return (
+        "00" + (now.getMonth() + 1)).slice(-2) + "/" + (
+        "00" + now.getDate()).slice(-2) + "/" + now.getFullYear() + " " + (
+        "00" + now.getHours()).slice(-2) + ":" + (
+        "00" + now.getMinutes()).slice(-2) + ":" + (
+        "00" + now.getSeconds()).slice(-2);
+}
+
 // Log com timestamp
 function serverLog(msg) {
     console.log(`${generateTimestamp()} ${msg}`);
@@ -391,11 +426,10 @@ function stopServer(msg) {
 
 //=======================================================================
 //
-// Roteamento e definição do servidor
+// Login e autenticacao
 //
 //=======================================================================
 
-// Login
 const OAuthClient = new google.auth.OAuth2(
         oauthCedentials.clientId,
         oauthCedentials.clientSecret,
@@ -434,7 +468,7 @@ async function validateAccessTokens(tokens) {
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Session middleware
+// Middleware de sessao
 app.set('trust proxy', 1);
 app.use(session({
     secret: crypto.randomBytes(20).toString("hex"),
@@ -449,26 +483,24 @@ app.use(session({
     }
 }));
 
-// Auth Middleware
+// Middleware de autenticacao
 app.use( async (req, res, next) => {
     var tokens = undefined;
     var authorized = false;
-    var tokenFrom = "none";
 
-    // Tenta pegar o token da sessao, seno, pega da query
+    // Tenta pegar o token da sessao, senao pega da query
     if (req.session.tokens) {
         tokens = req.session.tokens;
-        tokenFrom = "session";
     } else if (req.query.code) {        
         try {
             var code = await OAuthClient.getToken(req.query.code);
             tokens = code.tokens;
             req.session.tokens = tokens;
-            tokenFrom = "query";
+            res.redirect('/');
+            return;
         } catch (e) {
             tokens = undefined;
             authorized = false;
-            tokenFrom = "none";
         }
     }
 
@@ -480,11 +512,9 @@ app.use( async (req, res, next) => {
         return false;
     } );
 
-    // Debug
     if (serverConfig.auth.debugMethods.includes(req.method) && req.path !== '/sensors') {
         serverLog(`${req.protocol.toUpperCase()} Request: ${req.method} ${req.path}`);
         serverLog(`\tSessionID: ${JSON.stringify(req.sessionID)}`);
-        serverLog(`\tToken from: ${tokenFrom}`);
         serverLog(`\tAuthorized: ${authorized}`);
     }
 
@@ -498,6 +528,12 @@ app.use( async (req, res, next) => {
         }
     }
 })
+
+//=======================================================================
+//
+// Roteamento e definição do servidor
+//
+//=======================================================================
 
 app.use(express.static('public'));
 
@@ -549,7 +585,7 @@ app.post('/power', async (req, res) => {
     });
 })
 
-app.use( (req, res, next) => {
+app.use( () => {
     res.status(404).send('Página não foi encontrada.');
 });
 

@@ -23,16 +23,17 @@ function powerOn() {
     cardConfig.style.display = "block";
 }
 
-function freeze(freezeBool){
-    loadSymbol.style.display = freezeBool ? "block" : "none";
-    power.disabled = freezeBool;
-    apply.disabled = freezeBool;
-    tMin.disabled = freezeBool;
-    tMax.disabled = freezeBool;
-    tOp.disabled = freezeBool;
-    delay.disabled = freezeBool;
-    powerOnIdle.disabled = freezeBool;
+function freeze(action){
+    loadSymbol.style.display = action ? "block" : "none";
+    power.disabled = action;
+    apply.disabled = action;
+    tMin.disabled = action;
+    tMax.disabled = action;
+    tOp.disabled = action;
+    delay.disabled = action;
+    powerOnIdle.disabled = action;
 }
+
 function switchPower() {
     console.log("freeze");
     $.ajax({
@@ -158,7 +159,7 @@ function initAcState() {
         tMax.value = data.tMax;
         changeRangeVal("tMax");
     
-        tOp.value = data.tMop;
+        tOp.value = data.tOp;
         changeRangeVal("tOp");
         
         delay.value = data.delay;

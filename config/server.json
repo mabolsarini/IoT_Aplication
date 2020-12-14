@@ -12,6 +12,7 @@
             "certFile": "secret/client.crt"
         }
     },
+    "maxConnections": 10,
     "auth" : {
         "oauthCredentialsFile": "secret/oauth_credentials.json",
         "sessMaxAge": 86400000,

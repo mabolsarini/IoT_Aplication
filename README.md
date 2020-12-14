@@ -15,39 +15,39 @@ Esse é o código da aplicação, ou seja, a interface do usuário com o sistema
 Usamos NodeJS + Express para desenvolver o back-end, que serve a pasta `/public/` e algumas rotas GET e POST para possibilitar a interação do front-end com o servidor.
 
 Para rodar o código é necessário instalar o NodeJS.
-Após isso basta rodar o comando `npm install` para instalar as dependências e `node index.js` para subir o servidor.
+Após isso basta rodar o comando `npm install` para instalar as dependências e `node server.js` para subir o servidor.
 
-As configurações de endereço e porta do servidor e da conexão com o broker podem ser feitas na variável `config`, no começo arquivo que define o servidor (`index.js`). No futuro, iremos transformar essa configuração em um arquivo, desacoplado do código.
+Na pasta `config` existem arquivos que definem configurações do servidor, da comunicação com o Broker, dos campos das mensagens e dos sensores.
+Na pasta `secret` (ignorada pelo git), devem ser colocados os arquivos de credencial que o servidor irá utilizar. Isso inclui a senha do broker, certificados para autenticação com o Broker, certificados SSL para o servidor e configurações do protocolo OAuth2. Os caminhos para esses arquivos também podem ser definidos nos arquivos de configuração.
 
-Se estiver com as configurações padrão, navegue até http://localhost:8080" para visualizar a página.
+Se estiver com as configurações padrão, navegue até https://localhost:8443" para visualizar a página.
 
 
 ## TODO
-- Integração da tela de login
-- powerOnIdle não aplicando
-- timeout quando aplicamos uma configuração igual
-- buscar estado atual do ar condicionado ao incializar o servidor
 - Fazer deploy para a VM
 
 ## Tecnologias utilizadas
 
 ### Back-end
 
-#### NodeJS + Express (Servidor)
-- https://nodejs.org/
-- https://expressjs.com/
-- https://developer.mozilla.org/pt-BR/docs/Learn/Server-side/Express_Nodejs/Introdu%C3%A7%C3%A3o
+#### Servidor
+- [NodeJS](https://nodejs.org/)
+- [ExpressJS](https://expressjs.com/)
+
+#### Autenticação
+- [express-session](https://www.npmjs.com/package/express-session): cookies de sessão armazenados com módulo MemoryStore
+- protocolo OAuth2 (Google)
 
 #### Biblioteca de MQTT para JavaScript (interação com o Broker)
 - https://github.com/mqttjs/MQTT.js
 
 ### Front-end
-
 - HTML
 - CSS
 - JavaScript
+- Bootstrap
 
-#### Ajax para atualização dinâmica da página
+#### Ajax para comunicação com o Back-end
 - https://api.jquery.com/jquery.ajax/
 
 # Dados do time
@@ -63,12 +63,6 @@ Se estiver com as configurações padrão, navegue até http://localhost:8080" p
 - Portas: 1821/8021
 
 ## VM
-login: ssc952-t1
-senha: iot#$20t1
-porta: 2321
-
-ssh <login>@andromeda.lasdpc.icmc.usp.br -p 2321
-
-após logar: ssh tau02-vm4
-
-vm1 -> vm4
+- ssh: <login>@andromeda.lasdpc.icmc.usp.br -p 2321
+- após logar: ssh na VM tau02-vm4
+- instalar na VM 4
