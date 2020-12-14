@@ -35,7 +35,7 @@ Se estiver com as configurações padrão, navegue até https://localhost:8443" 
 - [ExpressJS](https://expressjs.com/)
 
 #### Autenticação
-- [express-session](https://www.npmjs.com/package/express-session): cookies de sessão armazenados com módulo MemoryStore
+- [express-session](https://www.npmjs.com/package/express-session): cookies de sessão armazenados com módulo [MemoryStore](https://www.npmjs.com/package/memorystore)
 - protocolo OAuth2 (Google)
 
 #### Biblioteca de MQTT para JavaScript (interação com o Broker)
