@@ -12,12 +12,14 @@ var isPowered;
 function powerOff() {
     isPowered = false;
     power.value = "Ligar";
+    
     cardConfig.style.display = "none";
 }
 
 function powerOn() {
     isPowered = true;
     power.value = "Desligar";
+    
     cardConfig.style.display = "block";
 }
 

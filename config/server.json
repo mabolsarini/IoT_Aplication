@@ -12,14 +12,6 @@
             "certFile": "secret/client.crt"
         }
     },
-<<<<<<< HEAD
-    "logSensorData": false,
-    "sessName": "sid",
-    "sessSecret" : "******",
-    "nodeEnv" : "development",
-    "sessLifetime" : 7200000
-  
-=======
     "maxConnections": 10,
     "auth" : {
         "oauthCredentialsFile": "secret/oauth_credentials.json",
@@ -27,5 +19,4 @@
         "debugMethods": [],
         "redirectOnUnauthorized": ["/"]
     }
->>>>>>> pastor-login
 }

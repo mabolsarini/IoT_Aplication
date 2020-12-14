@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ar-Condicionado IoT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="./css/main.css" media="screen" />
+    <style>
+        html,body,h1,h2,h3,h4,h5 {font-family: "Raleway", sans-serif}
+    </style>
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+</head>
+
+<body onload="initValues()">
+    <nav class="navbar navbar-dark bg-dark">
+        <h1 class="navbar-brand" href="#">
+          <img src="./images/iot.png" width="30" height="30" class="d-inline-block align-top" >
+          AR CONDICIONADO IOT - Time 1
+        </h1>
+    </nav>
+
+    <div class="sensores">
+        <h2>Monitoramento dos sensores</h2>
+        <div class="containerList containerListImg">
+            
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><img src="./images/sensor-temp.png" width="30" height="30" class="d-inline-block align-top imagem-espacada" ><text class="textList">Temperatura:</text>
+                    <ul class= "espacamento-horizontal" id="temp_List"></ul>
+                </li>
+                <li class="list-group-item"><img src="./images/sensor-umid.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Umidade:
+                    <ul class= "espacamento-horizontal" id="umid_List"></ul>
+                </li>
+                <li class="list-group-item"><img src="./images/sensor-luz.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Luminosidade:
+                    <ul class= "espacamento-horizontal" id="luz_List"></ul>
+                </li>
+                <li class="list-group-item"><img src="./images/sensor-movimento.png" width="30" height="30" class="d-inline-block align-top  imagem-espacada" >Movimento:
+                    <ul class= "espacamento-horizontal" id="movimento_List"></ul>
+                </li>
+            </ul>
+
+            <img src="./images/mapa.png" width="50%"  class="imagem-mapa" >
+        </div>
+    </div>
+
+    <div class="configuracao">
+        <h2>Configuração do Ar Condicionado</h2>
+        <h4>Ar Condicionado 23</h4>
+        <div class="containerList">     
+                       
+            <form class="powerButton divLoad" action="/" onsubmit="switchPower(); return false;">
+                <input id="power" type="submit" class="btn btn-primary" value="Desligar"><br>
+                <div class="loader" id="loadSymbol"  style="display: none;"></div>
+            </form>
+            
+            <div id="cardConfig" class="card cardEdit" style="display: block;">
+                <form id="configForm" action="#" onsubmit="sendState(); return false;">
+                    <label for="tMin">Temperatura mínima (°C)</label><br>
+                    <input type="range" id="tMin" oninput="changeRangeVal('tMin')" name="tMin" min="16" max="22"><span id="tMinVal"></span><br>
+    
+                    <label for="tMax">Temperatura máxima (°C)</label><br>
+                    <input type="range" id="tMax" oninput="changeRangeVal('tMax')" name="tMax" min="17" max="23"><span id="tMaxVal"></span><br>
+    
+                    <label for="tOp">Temperatura de operação (°C)</label><br>
+                    <input type="range" id="tOp" oninput="changeRangeVal('tOp')" name="tOp" min="16" max="23"><span id="tOpVal"></span><br>
+    
+                    <label for="delay">Delay entre os comandos (minutos)</label><br>
+                    <input type="range" id="delay" oninput="changeRangeVal('delay')" name="delay" min="1" max="120"><span id="delayVal"></span><br>
+    
+                    <input type="checkbox" id="powerOnIdle" name="powerOnIdle">
+                    <label for="powerOnIdle">Desligar quando a sala estiver vazia</label><br>
+                    
+                    <input id="apply" type="submit" class="btn btn-success" value="Aplicar"><br>
+                </form>
+               
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-box " style=>
+        <div>
+            <p class="p-footer">2020 - Time 1 IOT</p>
+        </div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</body>
+</html>
