@@ -12,27 +12,26 @@ var isPowered;
 function powerOff() {
     isPowered = false;
     power.value = "Ligar";
-    
     cardConfig.style.display = "none";
 }
 
 function powerOn() {
     isPowered = true;
     power.value = "Desligar";
-    
     cardConfig.style.display = "block";
 }
 
-function freeze(freezeBool){
-    loadSymbol.style.display = freezeBool ? "block" : "none";
-    power.disabled = freezeBool;
-    apply.disabled = freezeBool;
-    tMin.disabled = freezeBool;
-    tMax.disabled = freezeBool;
-    tOp.disabled = freezeBool;
-    delay.disabled = freezeBool;
-    powerOnIdle.disabled = freezeBool;
+function freeze(action){
+    loadSymbol.style.display = action ? "block" : "none";
+    power.disabled = action;
+    apply.disabled = action;
+    tMin.disabled = action;
+    tMax.disabled = action;
+    tOp.disabled = action;
+    delay.disabled = action;
+    powerOnIdle.disabled = action;
 }
+
 function switchPower() {
     console.log("freeze");
     $.ajax({
@@ -146,7 +145,11 @@ function initValues() {
 function initAcState() {
     $.get('/state', data => {
         isPowered = data.power;
-        if (isPowered) powerOn(); else powerOff();
+        if (isPowered) {
+            powerOn();
+        } else {
+            powerOff();
+        }
 
         tMin.value = data.tMin;
         changeRangeVal("tMin");
@@ -154,7 +157,7 @@ function initAcState() {
         tMax.value = data.tMax;
         changeRangeVal("tMax");
     
-        tOp.value = data.tMop;
+        tOp.value = data.tOp;
         changeRangeVal("tOp");
         
         delay.value = data.delay;
@@ -188,9 +191,4 @@ function populateSensorList(listName, sensorList) {
         document.getElementById(listName+"_List").appendChild(element);
         document.getElementById(listName +"_"+i).innerHTML += '<span style="color: blue;">'+sensor.value.toString()+'</span>';        
     });
-}
-
-function SignOut(){
-    $.post('/singout');
-    window.location.href = '/login';
 }
